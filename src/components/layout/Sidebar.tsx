@@ -26,8 +26,8 @@ const CAMINHONEIRO_NAV: NavItem[] = [
 ]
 
 const TRANSPORTADORA_NAV: NavItem[] = [
-  { href: '/contratos', label: 'Contratos', icon: '📋', phase: 2 },
-  { href: '/perfil',    label: 'Perfil',    icon: '🏢', phase: 1 },
+  { href: '/meus-contratos', label: 'Contratos', icon: '📋', phase: 2 },
+  { href: '/perfil',         label: 'Perfil',    icon: '🏢', phase: 1 },
 ]
 
 const ADMIN_NAV: NavItem[] = [

@@ -1,7 +1,5 @@
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
-  // Security headers
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   async headers() {
     return [
       {
@@ -11,19 +9,16 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
-          },
+          { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval necessário para Next.js dev
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://*.supabase.co",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com",
               "frame-ancestors 'none'",
             ].join('; '),
           },
@@ -31,8 +26,6 @@ const nextConfig: NextConfig = {
       },
     ]
   },
-
-  // Images
   images: {
     remotePatterns: [
       {
@@ -41,11 +34,6 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
-  },
-
-  // Experimental
-  experimental: {
-    typedRoutes: true,
   },
 }
 

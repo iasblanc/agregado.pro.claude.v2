@@ -5,7 +5,7 @@ import { useRouter }  from 'next/navigation'
 import { Alert }      from '@/components/ui/alert'
 import { Button }     from '@/components/ui/button'
 import { formatBRL, formatDate } from '@/lib/utils'
-import { calculateAnticipationFee } from '@/services/credit/limit-calculator'
+import { calculateAnticipationFee } from '@/lib/credit-calc'
 
 // ─── Tipos ────────────────────────────────────────────────────────
 

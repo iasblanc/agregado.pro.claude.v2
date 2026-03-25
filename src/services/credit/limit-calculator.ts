@@ -1,4 +1,3 @@
-import 'server-only'
 import { calcLimiteSugerido } from './score-engine'
 import { formatBRL }          from '@/lib/utils'
 

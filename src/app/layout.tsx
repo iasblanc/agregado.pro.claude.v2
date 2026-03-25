@@ -9,6 +9,7 @@ const playfairDisplay = Playfair_Display({
   style: ['normal', 'italic'],
   variable: '--font-display',
   display: 'swap',
+  preload: false,
 })
 
 const dmSans = DM_Sans({
@@ -16,6 +17,7 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500'],
   variable: '--font-body',
   display: 'swap',
+  preload: false,
 })
 
 // ─── Metadata ─────────────────────────────────────────────────────
