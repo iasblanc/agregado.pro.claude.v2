@@ -1,0 +1,257 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────
+   Design System AllYouCan — CSS Custom Properties
+   Agregado.Pro v0.1.0
+   Fonte: allyoucan-design-system.html
+   Regra: Usar tokens SEMPRE. Nunca hardcodar valores.
+───────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+
+:root {
+  /* ─── Cores ───────────────────────────────────────────────────── */
+  --color-bg:              #F5F2EC;  /* Fundo principal — parchment quente */
+  --color-surface:         #EDE9E0;  /* Superfície de cards */
+  --color-text-primary:    #1A1915;  /* Texto principal — near-black quente */
+  --color-text-secondary:  #5C5850;  /* Texto secundário / muted */
+  --color-text-muted:      #9C988E;  /* Texto terciário */
+  --color-accent:          #2D2B26;  /* Destaque dark */
+  --color-cta:             #1A1915;  /* Botões de ação principal */
+  --color-cta-text:        #F5F2EC;  /* Texto sobre CTA (invertido) */
+  --color-border:          #D8D3C8;  /* Bordas suaves */
+  --color-overlay:         rgba(26,25,21,0.06);
+
+  /* Status — viabilidade de contratos (DRE) */
+  --color-success:         #2A6B3A;
+  --color-success-bg:      #EDF5EE;
+  --color-success-border:  #A8D5B0;
+  --color-warning:         #9A6B00;
+  --color-warning-bg:      #FDF7E8;
+  --color-warning-border:  #F0D080;
+  --color-danger:          #9A2B2B;
+  --color-danger-bg:       #FDEDED;
+  --color-danger-border:   #F0A0A0;
+
+  /* ─── Tipografia ─────────────────────────────────────────────── */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-mono:    'Courier New', monospace;
+
+  /* ─── Espaçamento ────────────────────────────────────────────── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+  --space-4xl: 128px;
+
+  /* ─── Border Radius ──────────────────────────────────────────── */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-pill: 100px;
+
+  /* ─── Sombras ────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(26,25,21,0.08);
+  --shadow-md: 0 4px 16px rgba(26,25,21,0.10);
+  --shadow-lg: 0 12px 40px rgba(26,25,21,0.12);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Reset & Base
+───────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Tipografia — hierarquia display
+───────────────────────────────────────────────────────────────── */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--color-text-primary);
+}
+
+h1 {
+  font-size: clamp(36px, 5vw, 64px);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: clamp(28px, 3.5vw, 44px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+h4 { font-size: 18px; line-height: 1.3; }
+h5 { font-size: 15px; line-height: 1.4; }
+h6 { font-size: 13px; line-height: 1.4; }
+
+p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Links
+───────────────────────────────────────────────────────────────── */
+a {
+  color: var(--color-text-primary);
+  text-decoration-color: var(--color-border);
+  transition: text-decoration-color 0.15s ease;
+}
+
+a:hover {
+  text-decoration-color: var(--color-text-secondary);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Formulários base
+───────────────────────────────────────────────────────────────── */
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-overlay);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Botões base
+───────────────────────────────────────────────────────────────── */
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Utilitários — overline, caption
+───────────────────────────────────────────────────────────────── */
+.overline {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.caption {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Viabilidade de contratos — badges de status DRE
+   ✅ saudável / ⚠️ no limite / ❌ abaixo do custo
+───────────────────────────────────────────────────────────────── */
+.badge-saudavel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-limite {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-abaixo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Scrollbar customizada (sutil)
+───────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 100px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ─────────────────────────────────────────────────────────────────
+   Seleção de texto
+───────────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-cta-text);
+}

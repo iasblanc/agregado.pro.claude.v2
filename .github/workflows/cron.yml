@@ -1,0 +1,72 @@
+name: Cron — Tarefas Mensais
+
+on:
+  schedule:
+    # Todo dia 1 do mês às 03:00 UTC (00:00 Brasília)
+    - cron: '0 3 1 * *'
+  # Disparar manualmente se necessário
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Tarefa específica'
+        required: true
+        type: choice
+        options:
+          - all
+          - recalculate-scores
+          - review-tiers
+          - consolidate-snapshots
+
+jobs:
+  # ─── Recalcular scores de crédito ────────────────────────────
+  recalculate-scores:
+    name: Recalcular Scores Proprietários
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'recalculate-scores' || github.event.inputs.task == 'all' || github.event_name == 'schedule'
+    steps:
+      - name: Trigger score recalculation
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/credit/score?persist=true&batch=true" \
+            --max-time 300
+
+  # ─── Revisar tiers de fidelidade ──────────────────────────────
+  review-loyalty-tiers:
+    name: Revisar Tiers de Fidelidade
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'review-tiers' || github.event.inputs.task == 'all' || github.event_name == 'schedule'
+    steps:
+      - name: Trigger tier review
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/loyalty/tier-review" \
+            --max-time 300
+
+  # ─── Consolidar snapshots financeiros ────────────────────────
+  consolidate-snapshots:
+    name: Consolidar Snapshots Mensais
+    runs-on: ubuntu-latest
+    if: github.event.inputs.task == 'consolidate-snapshots' || github.event.inputs.task == 'all' || github.event_name == 'schedule'
+    steps:
+      - name: Trigger snapshot consolidation
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/financial/consolidate" \
+            --max-time 300
+
+  # ─── Avaliar transição banco ──────────────────────────────────
+  evaluate-bank-transition:
+    name: Avaliar Threshold Banco Próprio
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Trigger transition evaluation
+        run: |
+          curl -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/admin/bank-transition/evaluate" \
+            --max-time 60

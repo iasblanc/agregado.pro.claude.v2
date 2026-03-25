@@ -1,0 +1,77 @@
+import type { Metadata, Viewport } from 'next'
+import { Playfair_Display, DM_Sans } from 'next/font/google'
+import './globals.css'
+
+// ─── Tipografia AllYouCan Design System ──────────────────────────
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-display',
+  display: 'swap',
+})
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-body',
+  display: 'swap',
+})
+
+// ─── Metadata ─────────────────────────────────────────────────────
+export const metadata: Metadata = {
+  title: {
+    default: 'Agregado.Pro — Sistema Operacional do Caminhoneiro',
+    template: '%s | Agregado.Pro',
+  },
+  description:
+    'Gestão financeira, contratos e infraestrutura bancária para o caminhoneiro agregado.',
+  keywords: [
+    'caminhoneiro',
+    'agregado',
+    'gestão financeira',
+    'transporte rodoviário',
+    'custo por km',
+    'DRE caminhoneiro',
+  ],
+  authors: [{ name: 'Agregado.Pro' }],
+  robots: {
+    index: process.env.NODE_ENV === 'production',
+    follow: process.env.NODE_ENV === 'production',
+  },
+  // OpenGraph
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Agregado.Pro',
+    title: 'Agregado.Pro — Sistema Operacional do Caminhoneiro',
+    description:
+      'Gestão financeira, contratos e infraestrutura bancária para o caminhoneiro agregado.',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1, // Evita zoom acidental em inputs mobile
+  themeColor: '#F5F2EC',
+}
+
+// ─── Root Layout ──────────────────────────────────────────────────
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html
+      lang="pt-BR"
+      className={`${playfairDisplay.variable} ${dmSans.variable}`}
+      suppressHydrationWarning
+    >
+      <body className="font-body bg-ag-bg text-ag-primary antialiased">
+        {children}
+      </body>
+    </html>
+  )
+}
