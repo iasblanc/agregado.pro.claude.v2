@@ -29,3 +29,6 @@ test-results/
 
 # Claude Code
 .claude/settings.local.json
+
+# Secrets gerados pelo setup.sh
+.secrets-generated.txt
