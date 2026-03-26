@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react",
+    "noUncheckedIndexedAccess": false
+  },
+  "include": [
+    "jest.config.ts",
+    "jest.setup.ts",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
+}

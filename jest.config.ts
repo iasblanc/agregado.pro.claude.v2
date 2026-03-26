@@ -4,6 +4,11 @@ import nextJest from 'next/jest.js'
 const createJestConfig = nextJest({ dir: './' })
 
 const config: Config = {
+  globals: {
+    'ts-jest': {
+      tsconfig: './tsconfig.jest.json',
+    },
+  },
   displayName: 'agregado-pro',
   testEnvironment: 'node',
 
