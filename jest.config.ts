@@ -8,7 +8,7 @@ const config: Config = {
   testEnvironment: 'node',
 
   // Executar setup antes dos testes
-  setupFilesAfterFramework: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
   // Resolver path aliases (@/)
   moduleNameMapper: {
