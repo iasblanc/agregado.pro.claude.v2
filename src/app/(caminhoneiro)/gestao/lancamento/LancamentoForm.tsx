@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
+import { useFormState } from 'react-dom'
 import { createDreEntryAction }   from './actions'
 import type { AuthActionState }   from '@/app/(auth)/login/actions'
 import { Button }  from '@/components/ui/button'
@@ -80,7 +81,7 @@ interface LancamentoFormProps {
 const initialState: AuthActionState = {}
 
 export function LancamentoForm({ period, vehicleId, onSuccess }: LancamentoFormProps) {
-  const [state, formAction, isPending] = useActionState(createDreEntryAction, initialState)
+  const [state, formAction, isPending] = useFormState(createDreEntryAction, initialState)
   const [, startTransition]            = useTransition()
 
   const [entryType, setEntryType] = useState('receita')

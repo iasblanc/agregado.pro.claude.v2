@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
+import { useFormState } from 'react-dom'
 import Link    from 'next/link'
 import { registerAction }   from './actions'
 import type { AuthActionState } from '../login/actions'
@@ -61,7 +62,7 @@ function RoleSelector({
 // ─── Página ───────────────────────────────────────────────────────
 
 export default function CadastroPage() {
-  const [state, formAction, isPending] = useActionState(registerAction, initialState)
+  const [state, formAction, isPending] = useFormState(registerAction, initialState)
   const [role, setRole] = useState('caminhoneiro')
   const [showPwd, setShowPwd] = useState(false)
 

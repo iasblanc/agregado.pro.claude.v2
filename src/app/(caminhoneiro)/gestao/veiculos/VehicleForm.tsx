@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useFormState } from 'react-dom'
 import { createVehicleAction } from './actions'
 import type { AuthActionState } from '@/app/(auth)/login/actions'
 import { Button }  from '@/components/ui/button'
@@ -24,7 +24,7 @@ interface VehicleFormProps {
 }
 
 export function VehicleForm({ onSuccess }: VehicleFormProps) {
-  const [state, formAction, isPending] = useActionState(createVehicleAction, initialState)
+  const [state, formAction, isPending] = useFormState(createVehicleAction, initialState)
 
   if (state.success) {
     return (

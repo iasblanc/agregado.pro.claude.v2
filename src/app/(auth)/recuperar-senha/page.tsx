@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useFormState } from 'react-dom'
 import Link  from 'next/link'
 import { requestPasswordResetAction } from './actions'
 import type { AuthActionState }        from '../login/actions'
@@ -10,7 +10,7 @@ import { Input }  from '@/components/ui/input'
 const initialState: AuthActionState = {}
 
 export default function RecuperarSenhaPage() {
-  const [state, formAction, isPending] = useActionState(
+  const [state, formAction, isPending] = useFormState(
     requestPasswordResetAction,
     initialState
   )

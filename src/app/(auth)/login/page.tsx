@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useState } from 'react'
+import { useFormState } from 'react-dom'
 import Link from 'next/link'
 import { loginAction, type AuthActionState } from './actions'
 import { Button }  from '@/components/ui/button'
@@ -26,7 +27,7 @@ function EyeIcon({ open }: { open: boolean }) {
 // ─── Página ───────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const [state, formAction, isPending] = useActionState(loginAction, initialState)
+  const [state, formAction, isPending] = useFormState(loginAction, initialState)
   const [showPassword, setShowPassword] = useState(false)
 
   return (

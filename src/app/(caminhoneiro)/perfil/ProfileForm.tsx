@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useFormState } from 'react-dom'
 import { updateProfileAction } from './actions'
 import type { AuthActionState } from '@/app/(auth)/login/actions'
 import { Button } from '@/components/ui/button'
@@ -14,7 +14,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ defaultValues }: ProfileFormProps) {
-  const [state, formAction, isPending] = useActionState(updateProfileAction, initialState)
+  const [state, formAction, isPending] = useFormState(updateProfileAction, initialState)
 
   return (
     <form action={formAction} className="space-y-md" noValidate>
