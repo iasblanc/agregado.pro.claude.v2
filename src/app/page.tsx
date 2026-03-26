@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { redirect }     from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ROLE_HOME_ROUTES, type UserRole } from '@/lib/constants'

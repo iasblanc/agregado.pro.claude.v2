@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import type { Metadata }  from 'next'
 import { createClient }   from '@/lib/supabase/server'
 import { redirect }       from 'next/navigation'

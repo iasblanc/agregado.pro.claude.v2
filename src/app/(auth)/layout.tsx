@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
@@ -31,14 +32,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Logo */}
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-sm">
-            <span
-              className="font-display text-[22px] font-medium tracking-tight"
-              style={{ color: 'var(--color-cta-text)' }}
-            >
-              Agregado.Pro
-            </span>
-          </div>
+          <Image
+            src="/logo-white.svg"
+            alt="Agregado.Pro"
+            width={180}
+            height={44}
+            className="object-contain object-left"
+            priority
+          />
         </div>
 
         {/* Callout central */}
@@ -70,9 +71,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col justify-center items-center px-[var(--space-lg)] py-[var(--space-2xl)] md:px-[var(--space-2xl)]">
         {/* Logo mobile */}
         <div className="md:hidden mb-[var(--space-2xl)] self-start">
-          <span className="font-display text-[22px] font-medium text-ag-primary">
-            Agregado.Pro
-          </span>
+          <Image
+            src="/logo-trans.svg"
+            alt="Agregado.Pro"
+            width={160}
+            height={40}
+            className="object-contain object-left"
+            priority
+          />
         </div>
 
         {/* Conteúdo da página de auth */}

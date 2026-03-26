@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { handleBaaSWebhook, validateWebhookSignature } from '@/services/banking/webhook-handler'
 import type { BaaSWebhookPayload } from '@/services/banking/webhook-handler'

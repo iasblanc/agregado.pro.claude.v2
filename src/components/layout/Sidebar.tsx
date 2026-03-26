@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link                        from 'next/link'
 import { usePathname }             from 'next/navigation'
 import { useUser }                 from '@/hooks/useUser'
@@ -57,9 +58,25 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="px-lg py-[var(--space-xl)] border-b border-ag-border">
-        <span className="font-display text-[18px] font-medium text-ag-primary">
-          Agregado.Pro
-        </span>
+        <Link href="/" className="block w-[160px] h-[40px] relative" aria-label="Agregado.Pro">
+          {/* Logo SVG — usa logo-trans em fundo claro, logo-white em fundo escuro */}
+          <Image
+            src="/logo-trans.svg"
+            alt="Agregado.Pro"
+            width={160}
+            height={40}
+            className="object-contain object-left w-full h-full dark:hidden"
+            priority
+          />
+          <Image
+            src="/logo-white.svg"
+            alt="Agregado.Pro"
+            width={160}
+            height={40}
+            className="object-contain object-left w-full h-full hidden dark:block"
+            priority
+          />
+        </Link>
       </div>
 
       {/* Navegação */}
