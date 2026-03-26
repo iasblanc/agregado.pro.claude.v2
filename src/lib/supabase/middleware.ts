@@ -1,20 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import type { Database } from '@/types/database.types'
 
 /**
- * updateSession — Renova a sessão do Supabase em cada request.
- * Chamado pelo middleware.ts na raiz do projeto.
- *
- * Garante que:
- * - Tokens de sessão são sempre frescos
- * - Cookies são sincronizados entre cliente e servidor
- * - Usuários não autenticados são redirecionados para login
+ * updateSession — Edge-compatible middleware para renovar sessão Supabase.
+ * ATENÇÃO: NÃO importar database.types.ts aqui — incompatível com Edge Runtime.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient<Database>(
+  const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -50,10 +44,10 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Rotas públicas — não requer auth
-  const publicRoutes = ['/login', '/cadastro', '/recuperar-senha', '/']
+  const publicRoutes = ['/login', '/cadastro', '/recuperar-senha']
   const isPublicRoute = publicRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
-  )
+  ) || request.nextUrl.pathname === '/'
 
   // Sem sessão + rota protegida → redirecionar para login
   if (!user && !isPublicRoute) {
@@ -63,10 +57,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Com sessão + rota de auth → redirecionar para dashboard
+  // Com sessão + rota de auth → redirecionar para gestão
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/cadastro')) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/gestao'
     return NextResponse.redirect(url)
   }
 
