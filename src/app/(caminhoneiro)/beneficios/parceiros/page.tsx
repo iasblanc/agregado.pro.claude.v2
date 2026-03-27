@@ -7,7 +7,7 @@ import { Badge }          from '@/components/ui/badge'
 import { TIER_CONFIG, type LoyaltyTier } from '@/services/loyalty/engine'
 
 export const metadata: Metadata = { title: 'Parceiros' }
-export const revalidate = 3600  // 1 hora
+export const dynamic = 'force-dynamic'  // 1 hora
 
 export default async function ParceirosPage() {
   const supabase = await createClient()

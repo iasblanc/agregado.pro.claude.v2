@@ -9,7 +9,7 @@ import { MargemAlertBanner } from '@/components/banking/MargemAlertBanner'
 import { formatBRL, formatDate, getCurrentPeriod } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Banco Digital' }
-export const revalidate = 30
+export const dynamic = 'force-dynamic'
 
 export default async function BancoPage() {
   const supabase = await createClient()

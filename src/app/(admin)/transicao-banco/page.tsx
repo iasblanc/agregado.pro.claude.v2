@@ -7,7 +7,7 @@ import { evaluateTransitionReadiness } from '@/services/bank-transition'
 import { formatBRL }               from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Transição Banco Próprio' }
-export const revalidate = 3600  // Reavalia a cada 1 hora
+export const dynamic = 'force-dynamic'  // Reavalia a cada 1 hora
 
 export default async function TransicaoBancoPage() {
   const supabase = await createClient()

@@ -10,7 +10,7 @@ import { getCurrentPeriod }        from '@/lib/utils'
 import type { DreEntry }           from '@/types/database.types'
 
 export const metadata: Metadata = { title: 'Contratos Disponíveis' }
-export const revalidate = 120  // 2 min
+export const dynamic = 'force-dynamic'  // 2 min
 
 export default async function CaminhoneiroContratosPage() {
   const supabase = await createClient()
@@ -23,7 +23,7 @@ export default async function CaminhoneiroContratosPage() {
     .eq('user_id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'caminhoneiro') redirect('/contratos')
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/login')
 
   // Buscar custo/km real do usuário (últimos 3 meses consolidados)
   const { data: dreEntries } = await supabase

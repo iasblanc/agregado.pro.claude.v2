@@ -35,7 +35,7 @@ export default async function ContractDetailPage({ params }: Props) {
     .eq('user_id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'caminhoneiro') redirect('/contratos')
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/login')
 
   const contract = await getContractById(id)
   if (!contract) notFound()

@@ -9,7 +9,7 @@ import { getMyContracts } from '@/services/contracts'
 import { formatBRL, formatKm, formatDate } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Meus Contratos' }
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
 
 const STATUS_BADGE: Record<string, { label: string; variant: 'success' | 'warning' | 'info' | 'muted' | 'danger' }> = {
   rascunho:      { label: 'Rascunho',      variant: 'muted'    },

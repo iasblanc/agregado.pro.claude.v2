@@ -11,7 +11,7 @@ import { calculateTier, TIER_CONFIG, type LoyaltyTier, type LoyaltyMetrics } fro
 import { formatDate }          from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Clube de Benefícios' }
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export default async function BeneficiosPage() {
   const supabase = await createClient()

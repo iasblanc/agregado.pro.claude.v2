@@ -9,7 +9,7 @@ import { getCurrentScore }   from '@/services/credit'
 import { formatDate, formatBRL } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Score de Crédito' }
-export const revalidate = 300  // 5 minutos
+export const dynamic = 'force-dynamic'  // 5 minutos
 
 export default async function ScorePage() {
   const supabase = await createClient()

@@ -17,7 +17,7 @@ import { getCurrentPeriod, getLastPeriods, formatBRL, formatDate } from '@/lib/u
 import type { DreEntry }         from '@/types/database.types'
 
 export const metadata: Metadata = { title: 'Crédito' }
-export const revalidate = 120
+export const dynamic = 'force-dynamic'
 
 export default async function CreditoPage() {
   const supabase = await createClient()
