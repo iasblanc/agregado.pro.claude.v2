@@ -21,9 +21,6 @@ export default async function GestaoPage() {
   const supabase = await createClient()
 
   // Guard de role
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name')

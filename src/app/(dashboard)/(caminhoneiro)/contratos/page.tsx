@@ -14,9 +14,6 @@ export const dynamic = 'force-dynamic'  // 2 min
 
 export default async function CaminhoneiroContratosPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')

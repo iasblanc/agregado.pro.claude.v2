@@ -33,9 +33,6 @@ export default async function DrePage({ searchParams }: DrePageProps) {
   const params   = await searchParams
 
   // Guard
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name, id')

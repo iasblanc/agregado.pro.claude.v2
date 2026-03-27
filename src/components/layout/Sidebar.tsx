@@ -58,7 +58,7 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="px-lg py-[var(--space-xl)] border-b border-ag-border">
-        <Link href="/" className="block w-[160px] h-[40px] relative" aria-label="Agregado.Pro">
+        <Link href="/" prefetch={false} className="block w-[160px] h-[40px] relative" aria-label="Agregado.Pro">
           {/* Logo SVG — usa logo-trans em fundo claro, logo-white em fundo escuro */}
           <Image
             src="/logo-trans.svg"
@@ -104,6 +104,7 @@ export function Sidebar() {
               ) : (
                 <Link
                   href={item.href}
+                  prefetch={false}
                   className={[
                     'flex items-center gap-sm px-md py-sm rounded-md transition-colors duration-150',
                     'text-body-sm font-medium',
@@ -129,6 +130,7 @@ export function Sidebar() {
         ) : profile ? (
           <Link
             href="/perfil"
+            prefetch={false}
             className="flex items-center gap-sm px-md py-sm rounded-md hover:bg-ag-bg transition-colors group"
           >
             {/* Avatar com iniciais */}

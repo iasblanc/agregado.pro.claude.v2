@@ -53,6 +53,7 @@ export function MobileNav() {
               ) : (
                 <Link
                   href={item.href}
+            prefetch={false}
                   className={[
                     'flex flex-col items-center justify-center gap-xs py-sm transition-colors',
                     isActive ? 'text-ag-primary' : 'text-ag-muted hover:text-ag-secondary',
