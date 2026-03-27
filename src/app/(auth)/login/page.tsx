@@ -1,13 +1,9 @@
 'use client'
 
-import { useState }     from 'react'
-import { useFormState } from 'react-dom'
-import Link             from 'next/link'
-import { loginAction, type AuthActionState } from './actions'
+import { useState, useTransition } from 'react'
+import Link                        from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input }  from '@/components/ui/input'
-
-const initialState: AuthActionState = {}
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -23,8 +19,39 @@ function EyeIcon({ open }: { open: boolean }) {
 }
 
 export default function LoginPage() {
-  const [state, formAction, isPending] = useFormState(loginAction, initialState)
+  const [email,        setEmail]        = useState('')
+  const [password,     setPassword]     = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [error,        setError]        = useState('')
+  const [isPending,    startTransition] = useTransition()
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+
+    startTransition(async () => {
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',  // inclui cookies no request E processa Set-Cookie da resposta
+          body: JSON.stringify({ email, password }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          setError(data.error ?? 'Erro ao entrar.')
+          return
+        }
+
+        // Hard navigation — cookies já estão setados no browser antes deste ponto
+        window.location.href = data.redirectTo
+      } catch {
+        setError('Erro de conexão. Tente novamente.')
+      }
+    })
+  }
 
   return (
     <div className="space-y-[var(--space-2xl)]">
@@ -38,7 +65,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form action={formAction} className="space-y-[var(--space-md)]" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-[var(--space-md)]" noValidate>
         <Input
           name="email"
           type="email"
@@ -47,9 +74,10 @@ export default function LoginPage() {
           autoComplete="email"
           autoFocus
           required
-          error={state.fields?.email}
-          defaultValue=""
+          value={email}
+          onChange={e => setEmail(e.target.value)}
         />
+
         <Input
           name="password"
           type={showPassword ? 'text' : 'password'}
@@ -57,7 +85,8 @@ export default function LoginPage() {
           placeholder="••••••••"
           autoComplete="current-password"
           required
-          error={state.fields?.password}
+          value={password}
+          onChange={e => setPassword(e.target.value)}
           suffix={
             <button
               type="button"
@@ -70,11 +99,11 @@ export default function LoginPage() {
           }
         />
 
-        {state.error && !state.fields && (
+        {error && (
           <div role="alert" className="flex items-center gap-sm px-md py-sm rounded-md text-body-sm"
             style={{ background: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-border)' }}>
             <span aria-hidden="true">⚠</span>
-            {state.error}
+            {error}
           </div>
         )}
 
