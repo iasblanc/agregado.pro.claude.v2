@@ -1,16 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useFormState } from 'react-dom'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useFormState }        from 'react-dom'
+import Link                    from 'next/link'
 import { loginAction, type AuthActionState } from './actions'
 import { Button }  from '@/components/ui/button'
 import { Input }   from '@/components/ui/input'
 
 const initialState: AuthActionState = {}
-
-// ─── Ícones inline ────────────────────────────────────────────────
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -25,23 +22,20 @@ function EyeIcon({ open }: { open: boolean }) {
   )
 }
 
-// ─── Página ───────────────────────────────────────────────────────
-
 export default function LoginPage() {
-  const router = useRouter()
   const [state, formAction, isPending] = useFormState(loginAction, initialState)
   const [showPassword, setShowPassword] = useState(false)
 
-  // Após login bem-sucedido, navegar via router para preservar cookies
   useEffect(() => {
     if (state.redirectTo) {
-      router.push(state.redirectTo)
+      // Hard redirect — garante que cookies de sessão Supabase
+      // sejam lidos na primeira requisição da nova página
+      window.location.href = state.redirectTo
     }
-  }, [state.redirectTo, router])
+  }, [state.redirectTo])
 
   return (
     <div className="space-y-[var(--space-2xl)]">
-      {/* Cabeçalho */}
       <div className="space-y-[var(--space-sm)]">
         <p className="overline">Bem-vindo de volta</p>
         <h1 className="font-display text-display-md font-medium text-ag-primary">
@@ -52,7 +46,6 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Formulário */}
       <form action={formAction} className="space-y-[var(--space-md)]" noValidate>
         <Input
           name="email"
@@ -65,7 +58,6 @@ export default function LoginPage() {
           error={state.fields?.email}
           defaultValue=""
         />
-
         <Input
           name="password"
           type={showPassword ? 'text' : 'password'}
@@ -86,66 +78,42 @@ export default function LoginPage() {
           }
         />
 
-        {/* Erro global */}
         {state.error && !state.fields && (
-          <div
-            role="alert"
-            className="flex items-center gap-sm px-md py-sm rounded-md text-body-sm"
-            style={{
-              background: 'var(--color-danger-bg)',
-              color:      'var(--color-danger)',
-              border:     '1px solid var(--color-danger-border)',
-            }}
-          >
+          <div role="alert" className="flex items-center gap-sm px-md py-sm rounded-md text-body-sm"
+            style={{ background: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-border)' }}>
             <span aria-hidden="true">⚠</span>
             {state.error}
           </div>
         )}
 
-        {/* Navegando após login */}
         {state.redirectTo && (
           <div className="flex items-center gap-sm px-md py-sm rounded-md text-body-sm"
-            style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}
-          >
+            style={{ background: '#F0FDF4', color: '#15803D' }}>
             <span aria-hidden="true">✓</span>
-            Entrando...
+            Autenticado! Redirecionando...
           </div>
         )}
 
-        {/* Link recuperar senha */}
         <div className="flex justify-end">
-          <Link
-            href="/recuperar-senha"
-            className="text-body-sm text-ag-secondary hover:text-ag-primary transition-colors underline underline-offset-2"
-          >
+          <Link href="/recuperar-senha" className="text-body-sm text-ag-secondary hover:text-ag-primary transition-colors underline underline-offset-2">
             Esqueci minha senha
           </Link>
         </div>
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          loading={isPending || !!state.redirectTo}
-        >
+        <Button type="submit" fullWidth size="lg" loading={isPending || !!state.redirectTo}>
           Entrar
         </Button>
       </form>
 
-      {/* Separador */}
       <div className="flex items-center gap-md">
         <div className="flex-1 h-px bg-ag-border" />
         <span className="caption">ou</span>
         <div className="flex-1 h-px bg-ag-border" />
       </div>
 
-      {/* Cadastro */}
       <p className="text-body text-ag-secondary text-center">
         Ainda não tem conta?{' '}
-        <Link
-          href="/cadastro"
-          className="text-ag-primary font-medium hover:underline underline-offset-2 transition-colors"
-        >
+        <Link href="/cadastro" className="text-ag-primary font-medium hover:underline underline-offset-2 transition-colors">
           Criar conta grátis
         </Link>
       </p>

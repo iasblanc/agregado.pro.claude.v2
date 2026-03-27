@@ -1,15 +1,18 @@
 import type { ReactNode } from 'react'
-import { Sidebar }    from '@/components/layout/Sidebar'
-import { MobileNav }  from '@/components/layout/MobileNav'
+import { Sidebar }          from '@/components/layout/Sidebar'
+import { MobileNav }        from '@/components/layout/MobileNav'
+import { SessionRefresher } from '@/components/SessionRefresher'
 
 /**
  * Layout autenticado — envolve TODAS as rotas protegidas.
- * Sidebar (desktop) + MobileNav (mobile) + área de conteúdo.
- * Auth check feito em cada page individualmente via createClient().
+ * SessionRefresher garante que tokens Supabase permaneçam válidos.
  */
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-ag-bg">
+      {/* Mantém sessão Supabase viva (client-side) */}
+      <SessionRefresher />
+
       {/* Sidebar — desktop */}
       <Sidebar />
 
