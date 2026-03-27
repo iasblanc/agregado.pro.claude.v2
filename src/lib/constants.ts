@@ -139,7 +139,7 @@ export const PUBLIC_ROUTES = [
 // ─── Rotas por role ───────────────────────────────────────────────
 export const ROLE_HOME_ROUTES: Record<UserRole, string> = {
   caminhoneiro:  '/gestao',
-  transportadora: '/contratos',
+  transportadora: '/meus-contratos',
   admin:          '/admin',
   credit_analyst: '/admin/credito',
   compliance:     '/admin/auditoria',
