@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import type { Metadata }  from 'next'
 import { redirect }        from 'next/navigation'
-import { createClient }    from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Header }          from '@/components/layout/Header'
 import { ProfileForm }     from './ProfileForm'
 import { RoleBadge }       from '@/components/ui/badge'

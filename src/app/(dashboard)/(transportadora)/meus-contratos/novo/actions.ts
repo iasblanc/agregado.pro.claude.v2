@@ -2,7 +2,7 @@
 
 import { redirect }          from 'next/navigation'
 import { revalidatePath }    from 'next/cache'
-import { createClient }      from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { z }                 from 'zod'
 import { VEHICLE_TYPES, EQUIPMENT_TYPES } from '@/lib/constants'

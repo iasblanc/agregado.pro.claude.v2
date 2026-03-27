@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath }    from 'next/cache'
-import { createClient }      from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { dreEntrySchema }    from '@/lib/validations'
 import { headers }           from 'next/headers'

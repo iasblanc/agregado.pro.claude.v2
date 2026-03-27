@@ -1,7 +1,7 @@
 import type { Metadata }    from 'next'
 import Link                  from 'next/link'
 import { redirect }          from 'next/navigation'
-import { createClient }      from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Header }            from '@/components/layout/Header'
 import { DreCard }           from '@/components/financial/DreCard'
 import { CustoKmWidget }     from '@/components/financial/CustoKmWidget'

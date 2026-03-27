@@ -1,6 +1,6 @@
 import type { Metadata }          from 'next'
 import { redirect }                from 'next/navigation'
-import { createClient }            from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Header }                  from '@/components/layout/Header'
 import { Badge }                   from '@/components/ui/badge'
 import { evaluateTransitionReadiness } from '@/services/bank-transition'

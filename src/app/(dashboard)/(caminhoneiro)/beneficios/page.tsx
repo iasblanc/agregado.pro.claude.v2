@@ -1,7 +1,7 @@
 import type { Metadata }      from 'next'
 import { redirect }            from 'next/navigation'
 import { Suspense }            from 'react'
-import { createClient }        from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Header }              from '@/components/layout/Header'
 import { LoyaltyCard }         from '@/components/loyalty/LoyaltyCard'
 import { BenefitsGrid }        from '@/components/loyalty/BenefitsGrid'
