@@ -24,14 +24,17 @@ export default async function GestaoPage() {
 
 
   // Guard de role
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role, full_name')
     .eq('user_id', user.id)
     .single()
 
+  console.log('[GESTAO] profile:', profile?.role ?? 'null', 'error:', profileError?.message ?? 'none')
+
   if (!profile || profile.role !== 'caminhoneiro') {
-    redirect('/contratos')  // Transportadora vai para contratos
+    console.log('[GESTAO] redirecting to /contratos — profile null or wrong role')
+    redirect('/contratos')
   }
 
   const period      = getCurrentPeriod()
