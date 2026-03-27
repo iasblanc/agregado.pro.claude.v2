@@ -1,28 +1,18 @@
 import { redirect }       from 'next/navigation'
-import { createClient }    from '@/lib/supabase/server'
-import type { ReactNode }  from 'react'
-import { Sidebar }         from '@/components/layout/Sidebar'
-import { MobileNav }       from '@/components/layout/MobileNav'
-import { SessionRefresher } from '@/components/SessionRefresher'
+import { createClient }   from '@/lib/supabase/server'
+import type { ReactNode } from 'react'
+import { Sidebar }        from '@/components/layout/Sidebar'
+import { MobileNav }      from '@/components/layout/MobileNav'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * Layout autenticado — verifica sessão UMA VEZ.
- * Não é prefetchado (só renderiza em navegação real).
- * Pages filhas não fazem auth check — dependem deste layout.
- */
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   return (
     <div className="flex min-h-screen bg-ag-bg">
-      <SessionRefresher />
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 pb-[60px] md:pb-0">
         {children}

@@ -5,19 +5,15 @@ import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database.types'
 import type { UserRole } from '@/lib/constants'
 
-// ─── Tipos ────────────────────────────────────────────────────────
-
 interface UseUserReturn {
-  profile:   Profile | null
-  role:      UserRole | null
-  isLoading: boolean
-  isAdmin:   boolean
-  isCaminhoneiro: boolean
+  profile:          Profile | null
+  role:             UserRole | null
+  isLoading:        boolean
+  isAdmin:          boolean
+  isCaminhoneiro:   boolean
   isTransportadora: boolean
-  refresh:   () => Promise<void>
+  refresh:          () => Promise<void>
 }
-
-// ─── Hook ─────────────────────────────────────────────────────────
 
 export function useUser(): UseUserReturn {
   const [profile,   setProfile]   = useState<Profile | null>(null)
@@ -26,11 +22,11 @@ export function useUser(): UseUserReturn {
   const fetchProfile = useCallback(async () => {
     const supabase = createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    // getSession() lê do storage local — não faz chamada de rede
+    // Não dispara SIGNED_OUT indevidamente ao montar
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!user) {
+    if (!session?.user) {
       setProfile(null)
       setIsLoading(false)
       return
@@ -39,7 +35,7 @@ export function useUser(): UseUserReturn {
     const { data } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', session.user.id)
       .single()
 
     setProfile(data ?? null)
@@ -51,12 +47,14 @@ export function useUser(): UseUserReturn {
 
     const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session) {
+      (event, session) => {
+        if (session) {
+          fetchProfile()
+        } else if (event === 'SIGNED_OUT') {
+          // Só limpar estado local — NÃO redirecionar
+          // O DashboardLayout cuida do redirect via SSR
           setProfile(null)
           setIsLoading(false)
-        } else {
-          fetchProfile()
         }
       }
     )
