@@ -11,6 +11,9 @@ export const dynamic = 'force-dynamic'  // Reavalia a cada 1 hora
 
 export default async function TransicaoBancoPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null  // layout já redireciona
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')

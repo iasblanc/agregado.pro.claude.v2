@@ -19,6 +19,9 @@ export const metadata: Metadata = { title: 'Gestão' }
  */
 export default async function GestaoPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null  // layout já redireciona
+
 
   // Guard de role
   const { data: profile } = await supabase

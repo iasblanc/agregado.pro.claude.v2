@@ -13,6 +13,9 @@ export const dynamic = 'force-dynamic'  // 5 minutos
 
 export default async function ScorePage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null  // layout já redireciona
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')

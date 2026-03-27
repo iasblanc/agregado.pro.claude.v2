@@ -21,6 +21,9 @@ export const dynamic = 'force-dynamic'
 
 export default async function CreditoPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null  // layout já redireciona
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role, full_name')

@@ -22,6 +22,9 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'success' | 'warnin
 
 export default async function TransportadoraContratosPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null  // layout já redireciona
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')

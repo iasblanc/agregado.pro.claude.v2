@@ -25,6 +25,9 @@ interface Props {
 export default async function ContractDetailPage({ params }: Props) {
   const { id }   = await params
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null  // layout já redireciona
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, role')
