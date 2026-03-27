@@ -173,3 +173,5 @@ Ver [GITHUB_SECRETS.md](./GITHUB_SECRETS.md) para o guia completo de setup.
 ---
 
 *Agregado.Pro v1.0.0 — Agosto 2026*
+
+<!-- Last deploy: 2026-03-27 13:49 UTC -->
