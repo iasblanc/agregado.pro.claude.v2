@@ -2,8 +2,7 @@
 
 import { redirect }      from 'next/navigation'
 import { headers }       from 'next/headers'
-import { createClient }  from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient, COOKIE_ACCESS, COOKIE_REFRESH } from '@/lib/supabase/server'
 import { loginSchema }   from '@/lib/validations'
 import { ROLE_HOME_ROUTES, type UserRole } from '@/lib/constants'
 
@@ -133,21 +132,9 @@ export async function loginAction(
 // ─── Logout Action ────────────────────────────────────────────────
 
 export async function logoutAction(): Promise<void> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (user) {
-    try {
-      const admin = createAdminClient()
-      await admin.from('audit_events').insert({
-        user_id:       user.id,
-        action:        'logout',
-        resource_type: 'auth',
-      })
-    } catch { /* não bloquear */ }
-  }
-
-  await supabase.auth.signOut()
+  const { cookies } = await import('next/headers')
+  const cookieStore = await cookies()
+  cookieStore.delete(COOKIE_ACCESS)
+  cookieStore.delete(COOKIE_REFRESH)
   redirect('/login')
 }

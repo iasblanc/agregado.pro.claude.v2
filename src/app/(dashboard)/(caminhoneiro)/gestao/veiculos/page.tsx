@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import Link              from 'next/link'
 import { redirect }      from 'next/navigation'
-import { createClient }  from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Header }        from '@/components/layout/Header'
 import { Button }        from '@/components/ui/button'
 import { Badge }         from '@/components/ui/badge'
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: 'Meus Veículos' }
 
 export default async function VeiculosPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null  // layout já redireciona
 
   const { data: profile } = await supabase

@@ -14,7 +14,7 @@ export async function createVehicleAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada. Faça login novamente.' }
 
   const raw = {
@@ -98,7 +98,7 @@ export async function deactivateVehicleAction(vehicleId: string): Promise<AuthAc
   if (!vehicleId) return { error: 'ID inválido.' }
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada.' }
 
   const { error } = await supabase

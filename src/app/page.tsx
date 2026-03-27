@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { redirect }     from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/supabase/server'
 import { ROLE_HOME_ROUTES, type UserRole } from '@/lib/constants'
 
 /**
@@ -15,7 +16,7 @@ import { ROLE_HOME_ROUTES, type UserRole } from '@/lib/constants'
  */
 export default async function RootPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
 
   if (!user) {
     redirect('/login')

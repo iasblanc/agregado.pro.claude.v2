@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect }       from 'next/navigation'
 import Link               from 'next/link'
-import { createClient }   from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { Header }         from '@/components/layout/Header'
 import { Badge }          from '@/components/ui/badge'
 import { TIER_CONFIG, type LoyaltyTier } from '@/services/loyalty/engine'
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'  // 1 hora
 
 export default async function ParceirosPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null  // layout já redireciona
 
   const { data: profile } = await supabase

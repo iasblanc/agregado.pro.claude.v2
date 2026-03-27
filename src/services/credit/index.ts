@@ -14,7 +14,7 @@ export async function getCurrentScore(): Promise<{
   savedAt: string | null
 } | null> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null
 
   const { data: profile } = await supabase

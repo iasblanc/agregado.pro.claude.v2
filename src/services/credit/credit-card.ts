@@ -11,7 +11,7 @@ import type { DreEntry }     from '@/types/database.types'
 
 export async function getCurrentCard() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null
 
   const { data: profile } = await supabase
@@ -45,7 +45,7 @@ export async function requestCard(params: {
   candidatureId: string
 }): Promise<{ success: boolean; cardId?: string; error?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { success: false, error: 'Não autenticado' }
 
   const { data: profile } = await supabase

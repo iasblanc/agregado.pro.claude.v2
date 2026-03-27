@@ -39,7 +39,7 @@ export async function getOrCreateLoyaltyAccount(ownerId: string) {
 
 export async function getMyLoyaltyAccount() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null
 
   const { data: profile } = await supabase
@@ -205,7 +205,7 @@ export async function redeemBenefit(params: {
   benefitId: string
 }): Promise<{ success: boolean; code?: string; error?: string }> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { success: false, error: 'Não autenticado' }
 
   const { data: profile } = await supabase

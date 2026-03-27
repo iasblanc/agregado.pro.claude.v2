@@ -1,32 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient }        from '@supabase/ssr'
+import { createAdminClient, COOKIE_ACCESS, COOKIE_REFRESH } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure:   true,
+  sameSite: 'lax' as const,
+  path:     '/',
+  maxAge:   60 * 60 * 24 * 7, // 7 dias
+}
+
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const { email, password } = body
+  const { email, password } = await request.json()
 
   if (!email || !password) {
     return NextResponse.json({ error: 'E-mail e senha obrigatórios.' }, { status: 400 })
   }
 
-  const pendingCookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) { pendingCookies.push(...cookiesToSet) },
-      },
-    }
-  )
-
+  const supabase = createAdminClient()
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error || !data.user) {
+  if (error || !data.session) {
     return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })
   }
 
@@ -40,30 +35,11 @@ export async function POST(request: NextRequest) {
   }
   const redirectTo = roleRoutes[profile?.role ?? ''] ?? '/gestao'
 
-  // Log para debug
-  console.log('[LOGIN] pendingCookies count:', pendingCookies.length)
-  console.log('[LOGIN] cookie names:', pendingCookies.map(c => c.name))
+  console.log('[LOGIN] success', data.user.email, '→', redirectTo)
+  console.log('[LOGIN] access_token length:', data.session.access_token.length)
 
-  const response = NextResponse.json({
-    redirectTo,
-    _debug: { cookieCount: pendingCookies.length, cookieNames: pendingCookies.map(c => c.name) }
-  })
-
-  for (const { name, value, options } of pendingCookies) {
-    const cookieOpts = {
-      ...(options as Record<string, unknown>),
-      httpOnly: false,
-      secure:   process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path:     '/',
-    }
-    console.log('[LOGIN] setting cookie:', name, 'opts:', cookieOpts)
-    response.cookies.set(name, value, cookieOpts)
-  }
-
-  // Verificar que cookies foram realmente adicionados
-  const setCookieHeader = response.headers.getSetCookie?.() ?? []
-  console.log('[LOGIN] Set-Cookie headers count:', setCookieHeader.length)
-
+  const response = NextResponse.json({ redirectTo })
+  response.cookies.set(COOKIE_ACCESS,  data.session.access_token,  COOKIE_OPTS)
+  response.cookies.set(COOKIE_REFRESH, data.session.refresh_token, COOKIE_OPTS)
   return response
 }

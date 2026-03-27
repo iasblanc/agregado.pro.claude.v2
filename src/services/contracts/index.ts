@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient }  from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/supabase/server'
 import type { ContractPublicData } from './viability'
 
 // ─── Busca de contratos ───────────────────────────────────────────
@@ -52,7 +53,7 @@ export async function getPublishedContracts(filters?: {
 export async function getContractById(contractId: string) {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null
 
   const { data: contract, error } = await supabase
@@ -78,7 +79,7 @@ export async function getContractById(contractId: string) {
 export async function getMyContracts() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return []
 
   const { data: profile } = await supabase
@@ -108,7 +109,7 @@ export async function getMyContracts() {
 export async function getMyCandidatures() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return []
 
   const { data: profile } = await supabase

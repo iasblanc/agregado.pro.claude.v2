@@ -1,5 +1,6 @@
 import 'server-only'
 import { createClient } from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/supabase/server'
 import { calculateDre, calculateDreComparativo } from './calculator'
 import { getLastPeriods } from '@/lib/utils'
 
@@ -88,9 +89,7 @@ export async function createDreEntry(input: {
 }) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getServerUser()
 
   if (!user) throw new Error('Não autenticado')
 

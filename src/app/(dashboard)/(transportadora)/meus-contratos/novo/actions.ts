@@ -37,7 +37,7 @@ export async function publishContractAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada.' }
 
   const { data: profile } = await supabase

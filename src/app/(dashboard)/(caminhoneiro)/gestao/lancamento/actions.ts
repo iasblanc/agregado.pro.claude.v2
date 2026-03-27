@@ -16,7 +16,7 @@ export async function createDreEntryAction(
   const supabase = await createClient()
 
   // Verificar autenticação
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada. Faça login novamente.' }
 
   // Parsear e validar dados
@@ -108,7 +108,7 @@ export async function deleteDreEntryAction(entryId: string): Promise<AuthActionS
   if (!entryId) return { error: 'ID do lançamento inválido.' }
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada.' }
 
   // RLS garante que só o dono pode deletar — mas validamos explicitamente

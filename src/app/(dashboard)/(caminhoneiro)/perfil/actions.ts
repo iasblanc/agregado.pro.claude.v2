@@ -11,7 +11,7 @@ export async function updateProfileAction(
   formData: FormData
 ): Promise<AuthActionState> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada.' }
 
   const raw = {

@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import type { Metadata }  from 'next'
-import { createClient }   from '@/lib/supabase/server'
+import { createClient, getServerUser } from '@/lib/supabase/server'
 import { redirect }       from 'next/navigation'
 import { Header }         from '@/components/layout/Header'
 import { Card, CardHeader, CardBody } from '@/components/ui/card'
@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: 'Gestão' }
  */
 export default async function GestaoPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null  // layout já redireciona
 
 

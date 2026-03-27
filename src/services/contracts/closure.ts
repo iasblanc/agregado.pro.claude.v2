@@ -11,7 +11,7 @@ import { createAdminClient } from '@/lib/supabase/server'
  */
 export async function acceptCandidature(candidatureId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Não autenticado')
 
   const { data: profile } = await supabase
@@ -65,7 +65,7 @@ export async function acceptCandidature(candidatureId: string) {
  */
 export async function confirmCandidature(candidatureId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Não autenticado')
 
   const { data: profile } = await supabase
@@ -126,7 +126,7 @@ export async function confirmCandidature(candidatureId: string) {
  */
 export async function cancelCandidature(candidatureId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) throw new Error('Não autenticado')
 
   const { data: profile } = await supabase

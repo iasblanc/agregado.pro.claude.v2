@@ -1,5 +1,5 @@
 import { redirect }       from 'next/navigation'
-import { createClient }   from '@/lib/supabase/server'
+import { getServerUser }  from '@/lib/supabase/server'
 import type { ReactNode } from 'react'
 import { Sidebar }        from '@/components/layout/Sidebar'
 import { MobileNav }      from '@/components/layout/MobileNav'
@@ -7,9 +7,8 @@ import { MobileNav }      from '@/components/layout/MobileNav'
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  console.log('[LAYOUT] getUser:', user?.id ?? 'null', 'error:', authError?.message ?? 'none')
+  const user = await getServerUser()
+  console.log('[LAYOUT] user:', user?.id ?? 'null')
   if (!user) redirect('/login')
 
   return (

@@ -39,9 +39,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Verificar sessão ativa
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getServerUser()
 
   // Rotas públicas — não requer auth
   const publicRoutes = ['/login', '/cadastro', '/recuperar-senha']

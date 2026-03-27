@@ -30,7 +30,7 @@ interface DrePageProps {
 
 export default async function DrePage({ searchParams }: DrePageProps) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getServerUser()
   if (!user) return null  // layout já redireciona
 
   const params   = await searchParams

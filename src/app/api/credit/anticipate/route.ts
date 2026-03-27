@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }   from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { calculateAnticipationFee } from '@/services/credit/limit-calculator'
 import { calculateLiveScore }       from '@/services/credit'
@@ -15,7 +16,7 @@ const schema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getServerUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     const body   = await request.json()

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
 
     // Autenticação
-    const { data: { user }, error: authErr } = await supabase.auth.getUser()
+    const user = await getServerUser()
     if (authErr || !user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }

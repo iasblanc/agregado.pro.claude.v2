@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient }   from '@/lib/supabase/server'
+import { getServerUser } from '@/lib/supabase/server'
 import { z }              from 'zod'
 
 const candidatureSchema = z.object({
@@ -14,7 +15,7 @@ const candidatureSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getServerUser()
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
     const body   = await request.json()
