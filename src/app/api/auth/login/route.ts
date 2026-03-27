@@ -11,8 +11,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'E-mail e senha obrigatórios.' }, { status: 400 })
   }
 
-  // Acumular cookies — setAll É chamado de forma síncrona dentro do
-  // await signInWithPassword (via _notifyAllSubscribers + Promise.all)
   const pendingCookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
 
   const supabase = createServerClient(
@@ -20,51 +18,52 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          // chamado DENTRO do await signInWithPassword — síncrono
-          pendingCookies.push(...cookiesToSet)
-        },
+        getAll() { return request.cookies.getAll() },
+        setAll(cookiesToSet) { pendingCookies.push(...cookiesToSet) },
       },
     }
   )
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  // neste ponto pendingCookies JÁ está populado
 
   if (error || !data.user) {
     return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 })
   }
 
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('user_id', data.user.id)
-    .single()
+    .from('profiles').select('role').eq('user_id', data.user.id).single()
 
   const roleRoutes: Record<string, string> = {
     caminhoneiro:   '/gestao',
     transportadora: '/meus-contratos',
     admin:          '/admin',
-    credit_analyst: '/admin/credito',
-    compliance:     '/admin/auditoria',
   }
   const redirectTo = roleRoutes[profile?.role ?? ''] ?? '/gestao'
 
-  // Criar o response ÚNICO e aplicar cookies diretamente nele
-  const response = NextResponse.json({ redirectTo })
+  // Log para debug
+  console.log('[LOGIN] pendingCookies count:', pendingCookies.length)
+  console.log('[LOGIN] cookie names:', pendingCookies.map(c => c.name))
 
-  pendingCookies.forEach(({ name, value, options }) => {
-    response.cookies.set(name, value, {
-      ...(options as Parameters<typeof response.cookies.set>[2]),
-      path:     '/',
-      sameSite: 'lax',
-      secure:   true,
-      httpOnly: false,  // browser client precisa ler para rehydration
-    })
+  const response = NextResponse.json({
+    redirectTo,
+    _debug: { cookieCount: pendingCookies.length, cookieNames: pendingCookies.map(c => c.name) }
   })
+
+  for (const { name, value, options } of pendingCookies) {
+    const cookieOpts = {
+      ...(options as Record<string, unknown>),
+      httpOnly: false,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      path:     '/',
+    }
+    console.log('[LOGIN] setting cookie:', name, 'opts:', cookieOpts)
+    response.cookies.set(name, value, cookieOpts)
+  }
+
+  // Verificar que cookies foram realmente adicionados
+  const setCookieHeader = response.headers.getSetCookie?.() ?? []
+  console.log('[LOGIN] Set-Cookie headers count:', setCookieHeader.length)
 
   return response
 }
