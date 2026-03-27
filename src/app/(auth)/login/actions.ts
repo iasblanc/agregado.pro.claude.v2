@@ -10,9 +10,10 @@ import { ROLE_HOME_ROUTES, type UserRole } from '@/lib/constants'
 // ─── Tipos ────────────────────────────────────────────────────────
 
 export interface AuthActionState {
-  error?:   string
-  success?: string
-  fields?:  Record<string, string>
+  error?:      string
+  success?:    string
+  fields?:     Record<string, string>
+  redirectTo?: string
 }
 
 // ─── Rate Limiting simples (em memória) ───────────────────────────
@@ -127,7 +128,7 @@ export async function loginAction(
   const role  = (profile?.role as UserRole) ?? 'caminhoneiro'
   const route = ROLE_HOME_ROUTES[role] ?? '/gestao'
 
-  redirect(route)
+  return { redirectTo: route }
 }
 
 // ─── Logout Action ────────────────────────────────────────────────

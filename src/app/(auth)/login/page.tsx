@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useFormState } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { loginAction, type AuthActionState } from './actions'
 import { Button }  from '@/components/ui/button'
@@ -27,8 +28,16 @@ function EyeIcon({ open }: { open: boolean }) {
 // ─── Página ───────────────────────────────────────────────────────
 
 export default function LoginPage() {
+  const router = useRouter()
   const [state, formAction, isPending] = useFormState(loginAction, initialState)
   const [showPassword, setShowPassword] = useState(false)
+
+  // Após login bem-sucedido, navegar via router para preservar cookies
+  useEffect(() => {
+    if (state.redirectTo) {
+      router.push(state.redirectTo)
+    }
+  }, [state.redirectTo, router])
 
   return (
     <div className="space-y-[var(--space-2xl)]">
@@ -93,6 +102,16 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Navegando após login */}
+        {state.redirectTo && (
+          <div className="flex items-center gap-sm px-md py-sm rounded-md text-body-sm"
+            style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}
+          >
+            <span aria-hidden="true">✓</span>
+            Entrando...
+          </div>
+        )}
+
         {/* Link recuperar senha */}
         <div className="flex justify-end">
           <Link
@@ -107,7 +126,7 @@ export default function LoginPage() {
           type="submit"
           fullWidth
           size="lg"
-          loading={isPending}
+          loading={isPending || !!state.redirectTo}
         >
           Entrar
         </Button>
