@@ -1,236 +1,163 @@
+export const dynamic = 'force-dynamic'
+
 import type { Metadata }    from 'next'
 import Link                  from 'next/link'
 import { redirect }          from 'next/navigation'
-import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
+import { getServerUser, createAdminClient } from '@/lib/supabase/server'
 import { Header }            from '@/components/layout/Header'
-import { DreCard }           from '@/components/financial/DreCard'
-import { CustoKmWidget }     from '@/components/financial/CustoKmWidget'
-import { MargemIndicator }   from '@/components/financial/MargemIndicator'
+import { Card, CardHeader, CardBody } from '@/components/ui/card'
 import { Button }            from '@/components/ui/button'
-import { calculateDre }      from '@/services/dre/calculator'
-import {
-  getCurrentPeriod,
-  formatPeriod,
-  getLastPeriods,
-} from '@/lib/utils'
-import type { DreEntry }     from '@/types/database.types'
+import { DreDeleteButton }   from './DreDeleteButton'
+import { formatBRL, getCurrentPeriod, formatPeriod, getLastPeriods } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'DRE' }
 
-// Revalidar a cada 60 segundos
-export const dynamic = 'force-dynamic'
-
-// ─── Props ────────────────────────────────────────────────────────
-
-interface DrePageProps {
-  searchParams: Promise<{ period?: string; vehicle?: string }>
+interface DreEntry {
+  id: string; entry_type: string; category: string; description: string
+  amount: number; km_reference?: number | null; period: string; created_at: string
 }
 
-// ─── Página ───────────────────────────────────────────────────────
+function calcDRE(entries: DreEntry[]) {
+  const r = entries.reduce((acc, e) => {
+    const v = Number(e.amount)
+    if (e.entry_type === 'receita')        { acc.receita += v; acc.km += Number(e.km_reference ?? 0) }
+    if (e.entry_type === 'custo_fixo')     acc.fixo    += v
+    if (e.entry_type === 'custo_variavel') acc.variavel += v
+    if (e.entry_type === 'pessoal')        acc.pessoal  += v
+    return acc
+  }, { receita: 0, fixo: 0, variavel: 0, pessoal: 0, km: 0 })
+  const custo     = r.fixo + r.variavel + r.pessoal
+  const resultado = r.receita - custo
+  const margem    = r.receita > 0 ? (resultado / r.receita) * 100 : null
+  const custoKm   = r.km > 0 ? custo / r.km : null
+  return { ...r, custo, resultado, margem, custoKm }
+}
 
-export default async function DrePage({ searchParams }: DrePageProps) {
-  const supabase = await createClient()
+const TIPO_LABELS: Record<string, string> = {
+  receita:        '💵 Receita',
+  custo_fixo:     '📌 Custo Fixo',
+  custo_variavel: '🔄 Custo Variável',
+  pessoal:        '👤 Pessoal',
+}
+
+export default async function DrePage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const user = await getServerUser()
-  if (!user) return null  // layout já redireciona
+  if (!user) return null
   const admin = createAdminClient()
 
-  const params   = await searchParams
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-  // Guard
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('role, full_name, id')
-    .eq('user_id', user.id)
-    .single()
+  const params    = await searchParams
+  const period    = params.period ?? getCurrentPeriod()
+  const periods   = getLastPeriods(12)
 
-  if (!profile || profile.role !== 'caminhoneiro') redirect('/contratos')
+  const { data: entries } = await admin
+    .from('dre_entries')
+    .select('*')
+    .eq('owner_id', profile.id)
+    .eq('period', period)
+    .order('created_at', { ascending: false })
 
-  // Período selecionado (padrão: mês atual)
-  const period        = params.period ?? getCurrentPeriod()
-  const lastPeriods   = getLastPeriods(12)
-  const periodLabel   = formatPeriod(period)
+  const allEntries = (entries ?? []) as DreEntry[]
+  const dre = calcDRE(allEntries)
 
-  // Buscar lançamentos do período atual e anterior
-  const prevPeriod = getLastPeriods(2)[1] ?? null
-
-  const [resAtual, resAnterior] = await Promise.all([
-    supabase
-      .from('dre_entries')
-      .select('*')
-      .eq('period', period)
-      .order('created_at', { ascending: false }),
-    prevPeriod
-      ? supabase
-          .from('dre_entries')
-          .select('*')
-          .eq('period', prevPeriod)
-      : Promise.resolve({ data: [] as DreEntry[], error: null }),
-  ])
-
-  const entries        = resAtual.data    ?? []
-  const entriesAnterior = resAnterior.data ?? []
-
-  const dre       = calculateDre(entries,        period)
-  const dreAnterior = prevPeriod ? calculateDre(entriesAnterior, prevPeriod) : null
-
-  const hasData = entries.length > 0
+  // Agrupar por tipo
+  const groups = ['receita', 'custo_variavel', 'custo_fixo', 'pessoal']
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="DRE" subtitle={`Demonstrativo de Resultado — ${periodLabel}`} />
+      <Header title="DRE" subtitle={`Demonstrativo — ${formatPeriod(period)}`} />
 
-      <main className="flex-1 px-lg py-xl md:px-xl max-w-3xl mx-auto w-full space-y-xl">
+      <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto">
 
         {/* Seletor de período */}
-        <div className="flex items-center justify-between gap-md flex-wrap">
-          <div>
-            <p className="overline">Período</p>
-            <h1 className="font-display text-display-sm font-medium text-ag-primary">
-              {periodLabel}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-sm">
-            <select
-              defaultValue={period}
-              onChange={(e) => {
-                // Client navigation via form/link
-                window.location.href = `/dre?period=${e.target.value}`
-              }}
-              className="text-body-sm bg-ag-surface border border-ag-border rounded-md px-md py-sm text-ag-primary focus:outline-none focus:border-ag-accent"
-              aria-label="Selecionar período"
-            >
-              {lastPeriods.map((p) => (
-                <option key={p} value={p}>
-                  {formatPeriod(p)}
-                </option>
-              ))}
-            </select>
-
-            <Link href="/gestao/lancamento">
-              <Button size="sm">+ Lançamento</Button>
+        <div className="flex gap-sm overflow-x-auto pb-sm">
+          {periods.map(p => (
+            <Link key={p} href={`/dre?period=${p}`}>
+              <span
+                className="px-md py-sm rounded-pill text-body-sm font-medium whitespace-nowrap border transition-all"
+                style={{
+                  background:  p === period ? 'var(--color-accent)' : 'transparent',
+                  borderColor: p === period ? 'var(--color-accent)' : 'var(--color-border)',
+                  color:       p === period ? 'var(--color-cta-text)' : 'var(--color-text-secondary)',
+                }}
+              >
+                {formatPeriod(p)}
+              </span>
             </Link>
-          </div>
+          ))}
         </div>
 
-        {hasData ? (
-          <>
-            {/* Indicador de margem */}
-            <MargemIndicator
-              margem={dre.margemOperacional}
-              resultado={dre.resultadoOperacional}
-              size="lg"
-            />
+        {/* Resumo do DRE */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
+          {[
+            { label: 'Receita',   val: dre.receita,   color: 'var(--color-success)' },
+            { label: 'Custo Total', val: dre.custo,   color: 'var(--color-danger)' },
+            { label: 'Resultado', val: dre.resultado, color: dre.resultado >= 0 ? 'var(--color-success)' : 'var(--color-danger)' },
+            { label: 'Custo/km',  val: dre.custoKm,  suffix: '/km', color: 'var(--color-text-primary)' },
+          ].map(c => (
+            <Card key={c.label} elevated={c.label === 'Resultado'}>
+              <CardBody>
+                <p className="caption mb-xs">{c.label}</p>
+                <p className="font-display text-[20px] font-medium" style={{ color: c.color }}>
+                  {c.val !== null ? formatBRL(c.val) + (c.suffix ?? '') : '—'}
+                </p>
+                {c.label === 'Resultado' && dre.margem !== null && (
+                  <p className="caption mt-xs" style={{ color: c.color }}>
+                    Margem: {dre.margem.toFixed(1)}%
+                  </p>
+                )}
+              </CardBody>
+            </Card>
+          ))}
+        </div>
 
-            {/* Grid: DRE + Custo/km */}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-xl items-start">
-              {/* DRE detalhado */}
-              <DreCard dre={dre} />
+        {/* Botão novo lançamento */}
+        <Link href={`/gestao/lancamento?period=${period}`}>
+          <Button fullWidth>+ Novo lançamento em {formatPeriod(period)}</Button>
+        </Link>
 
-              {/* Custo por km */}
-              <CustoKmWidget
-                custoPerKm={dre.custoPerKm}
-                kmTotal={dre.kmTotal}
-                totalCusto={dre.totalCusto}
-                custoAnterior={dreAnterior?.custoPerKm}
-              />
-            </div>
-
-            {/* Tabela de lançamentos */}
-            <EntriesTable entries={entries} />
-          </>
+        {/* Lançamentos por grupo */}
+        {allEntries.length === 0 ? (
+          <Card>
+            <CardBody>
+              <p className="text-body text-ag-secondary text-center py-xl">
+                Nenhum lançamento em {formatPeriod(period)}.
+              </p>
+            </CardBody>
+          </Card>
         ) : (
-          <EmptyState period={periodLabel} />
+          groups.map(tipo => {
+            const itens = allEntries.filter(e => e.entry_type === tipo)
+            if (itens.length === 0) return null
+            const total = itens.reduce((s, e) => s + Number(e.amount), 0)
+            return (
+              <Card key={tipo}>
+                <CardHeader label={TIPO_LABELS[tipo]}>
+                  <span className="text-body-sm font-medium text-ag-primary">{formatBRL(total)}</span>
+                </CardHeader>
+                <CardBody>
+                  <div className="divide-y divide-ag-border">
+                    {itens.map(e => (
+                      <div key={e.id} className="flex items-center justify-between py-sm gap-md">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-body-sm font-medium text-ag-primary truncate">{e.description}</p>
+                          <p className="caption text-ag-muted">{e.category}{e.km_reference ? ` · ${Number(e.km_reference).toLocaleString('pt-BR')} km` : ''}</p>
+                        </div>
+                        <div className="flex items-center gap-sm shrink-0">
+                          <span className="text-body-sm font-medium text-ag-primary">{formatBRL(Number(e.amount))}</span>
+                          <DreDeleteButton entryId={e.id} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardBody>
+              </Card>
+            )
+          })
         )}
       </main>
     </div>
   )
 }
-
-// ─── Tabela de lançamentos ────────────────────────────────────────
-
-function EntriesTable({ entries }: { entries: DreEntry[] }) {
-  const typeLabel: Record<string, string> = {
-    receita:        '📥 Receita',
-    custo_fixo:     '📌 Fixo',
-    custo_variavel: '⛽ Variável',
-  }
-
-  return (
-    <section aria-label="Lançamentos do período">
-      <h2 className="font-display text-display-sm font-medium text-ag-primary mb-lg">
-        Lançamentos
-      </h2>
-
-      <div className="bg-ag-surface border border-ag-border rounded-xl overflow-hidden shadow-sm">
-        {/* Header da tabela */}
-        <div className="grid grid-cols-[1fr_auto_auto] gap-md px-lg py-sm bg-ag-bg border-b border-ag-border">
-          <span className="caption font-medium">Descrição</span>
-          <span className="caption font-medium">Tipo</span>
-          <span className="caption font-medium text-right">Valor</span>
-        </div>
-
-        {/* Linhas */}
-        <div className="divide-y divide-ag-border">
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              className="grid grid-cols-[1fr_auto_auto] gap-md px-lg py-md hover:bg-ag-overlay transition-colors"
-            >
-              <div className="min-w-0">
-                <p className="text-body-sm text-ag-primary truncate">{entry.description}</p>
-                {entry.km_reference && (
-                  <p className="caption text-ag-muted">
-                    {Number(entry.km_reference).toLocaleString('pt-BR')} km
-                  </p>
-                )}
-              </div>
-              <span className="caption whitespace-nowrap self-center">
-                {typeLabel[entry.entry_type] ?? entry.entry_type}
-              </span>
-              <span
-                className="text-body-sm font-medium self-center text-right whitespace-nowrap"
-                style={{
-                  color: entry.entry_type === 'receita'
-                    ? 'var(--color-success)'
-                    : 'var(--color-danger)',
-                }}
-              >
-                {entry.entry_type === 'receita' ? '+' : '-'}
-                {Number(entry.amount).toLocaleString('pt-BR', {
-                  style:    'currency',
-                  currency: 'BRL',
-                })}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Estado vazio ─────────────────────────────────────────────────
-
-function EmptyState({ period }: { period: string }) {
-  return (
-    <div className="text-center py-[var(--space-4xl)] space-y-xl">
-      <div className="text-[56px]" aria-hidden="true">📊</div>
-      <div className="space-y-md max-w-sm mx-auto">
-        <h2 className="font-display text-display-sm font-medium text-ag-primary">
-          Sem lançamentos em {period}
-        </h2>
-        <p className="text-body text-ag-secondary">
-          Registre suas receitas e custos para ver o DRE e saber se seu caminhão está dando lucro.
-        </p>
-      </div>
-      <Link href="/gestao/lancamento">
-        <Button size="lg">
-          Registrar primeiro lançamento
-        </Button>
-      </Link>
-    </div>
-  )
-}
-
-

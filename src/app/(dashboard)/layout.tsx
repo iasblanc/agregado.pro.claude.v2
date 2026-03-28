@@ -8,7 +8,6 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const user = await getServerUser()
-  console.log('[LAYOUT] user:', user?.id ?? 'null')
   if (!user) redirect('/login')
 
   return (

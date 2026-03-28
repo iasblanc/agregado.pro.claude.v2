@@ -1,61 +1,30 @@
-import type { Metadata }     from 'next'
-import Link                   from 'next/link'
-import { Header }             from '@/components/layout/Header'
-import { LancamentoForm }     from './LancamentoForm'
-import { getCurrentPeriod, formatPeriod } from '@/lib/utils'
+export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = { title: 'Novo Lançamento' }
+import { redirect }    from 'next/navigation'
+import { getServerUser, createAdminClient } from '@/lib/supabase/server'
+import { LancamentoClient } from './LancamentoClient'
+import { getCurrentPeriod } from '@/lib/utils'
 
-export default function LancamentoPage() {
-  const period = getCurrentPeriod()
+export default async function LancamentoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string; type?: string }>
+}) {
+  const user = await getServerUser()
+  if (!user) return null
+  const admin = createAdminClient()
 
-  return (
-    <div className="flex flex-col h-full">
-      <Header title="Novo lançamento" subtitle={`Período: ${formatPeriod(period)}`} />
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-      <main className="flex-1 px-lg py-xl md:px-xl">
-        <div className="max-w-lg mx-auto">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-sm mb-xl text-body-sm text-ag-muted">
-            <Link href="/gestao" className="hover:text-ag-primary transition-colors">
-              Gestão
-            </Link>
-            <span aria-hidden="true">›</span>
-            <span className="text-ag-primary">Novo lançamento</span>
-          </div>
+  const params  = await searchParams
+  const period  = params.period ?? getCurrentPeriod()
 
-          {/* Intro */}
-          <div className="mb-xl space-y-xs">
-            <p className="overline">Registrar</p>
-            <h1 className="font-display text-display-md font-medium text-ag-primary">
-              Novo lançamento
-            </h1>
-            <p className="text-body text-ag-secondary">
-              Registre receitas e custos para manter seu DRE atualizado.
-            </p>
-          </div>
+  const { data: vehicles } = await admin
+    .from('vehicles')
+    .select('id, brand, model, plate, type')
+    .eq('owner_id', profile.id)
+    .eq('is_active', true)
 
-          {/* Formulário */}
-          <div
-            className="bg-ag-surface rounded-xl border border-ag-border p-lg shadow-sm"
-          >
-            <LancamentoForm period={period} />
-          </div>
-
-          {/* Dica */}
-          <div
-            className="mt-lg px-md py-sm rounded-md text-body-sm"
-            style={{
-              background: '#EFF6FF',
-              border:     '1px solid #BFDBFE',
-              color:      '#1D4ED8',
-            }}
-          >
-            <span className="font-medium">💡 Dica:</span>{' '}
-            Ao registrar a receita, informe os KM rodados para calcular seu custo por km automaticamente.
-          </div>
-        </div>
-      </main>
-    </div>
-  )
+  return <LancamentoClient period={period} preselectedType={params.type} vehicles={vehicles ?? []} />
 }
