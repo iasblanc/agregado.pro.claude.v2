@@ -47,7 +47,7 @@ export async function createVehicleAction(
   if (existing) return { error: `Placa ${parsed.data.plate} já cadastrada.` }
 
   // Buscar profile
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('id, role')
     .eq('user_id', user.id)

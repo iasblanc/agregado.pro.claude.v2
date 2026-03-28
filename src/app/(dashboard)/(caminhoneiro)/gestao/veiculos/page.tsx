@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import Link              from 'next/link'
 import { redirect }      from 'next/navigation'
-import { createClient, getServerUser } from '@/lib/supabase/server'
+import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
 import { Header }        from '@/components/layout/Header'
 import { Button }        from '@/components/ui/button'
 import { Badge }         from '@/components/ui/badge'
@@ -16,8 +16,9 @@ export default async function VeiculosPage() {
   const supabase = await createClient()
   const user = await getServerUser()
   if (!user) return null  // layout já redireciona
+  const admin = createAdminClient()
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('role')
     .eq('user_id', user.id)

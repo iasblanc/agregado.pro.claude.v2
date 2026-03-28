@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import type { Metadata }  from 'next'
 import { redirect }        from 'next/navigation'
-import { createClient, getServerUser } from '@/lib/supabase/server'
+import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
 import { Header }          from '@/components/layout/Header'
 import { ProfileForm }     from './ProfileForm'
 import { RoleBadge }       from '@/components/ui/badge'
@@ -14,8 +14,9 @@ export default async function PerfilPage() {
   const supabase = await createClient()
   const user = await getServerUser()
   if (!user) return null  // layout já redireciona
+  const admin = createAdminClient()
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('*')
     .eq('user_id', user.id)

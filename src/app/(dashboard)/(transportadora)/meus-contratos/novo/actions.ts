@@ -40,7 +40,7 @@ export async function publishContractAction(
   const user = await getServerUser()
   if (!user) return { error: 'Sessão expirada.' }
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('id, role')
     .eq('user_id', user.id)

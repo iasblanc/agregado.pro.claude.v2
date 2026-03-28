@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import type { Metadata }  from 'next'
-import { createClient, getServerUser } from '@/lib/supabase/server'
+import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
 import { redirect }       from 'next/navigation'
 import { Header }         from '@/components/layout/Header'
 import { Card, CardHeader, CardBody } from '@/components/ui/card'
@@ -21,10 +21,11 @@ export default async function GestaoPage() {
   const supabase = await createClient()
   const user = await getServerUser()
   if (!user) return null  // layout já redireciona
+  const admin = createAdminClient()
 
 
   // Guard de role
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('role, full_name')
     .eq('user_id', user.id)

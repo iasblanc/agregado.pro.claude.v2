@@ -1,7 +1,7 @@
 import type { Metadata }    from 'next'
 import { redirect }          from 'next/navigation'
 import Link                  from 'next/link'
-import { createClient, getServerUser } from '@/lib/supabase/server'
+import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
 import { Header }            from '@/components/layout/Header'
 import { Badge }             from '@/components/ui/badge'
 import { DashboardViagem }   from '@/components/banking/DashboardViagem'
@@ -15,8 +15,9 @@ export default async function BancoPage() {
   const supabase = await createClient()
   const user = await getServerUser()
   if (!user) return null  // layout já redireciona
+  const admin = createAdminClient()
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('id, role, full_name')
     .eq('user_id', user.id)

@@ -45,7 +45,7 @@ export async function createDreEntryAction(
   }
 
   // Buscar profile do usuário
-  const { data: profile, error: profileErr } = await supabase
+  const { data: profile, error: profileErr } = await admin
     .from('profiles')
     .select('id, role')
     .eq('user_id', user.id)

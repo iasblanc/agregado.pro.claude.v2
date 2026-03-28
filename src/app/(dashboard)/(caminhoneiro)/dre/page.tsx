@@ -1,7 +1,7 @@
 import type { Metadata }    from 'next'
 import Link                  from 'next/link'
 import { redirect }          from 'next/navigation'
-import { createClient, getServerUser } from '@/lib/supabase/server'
+import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
 import { Header }            from '@/components/layout/Header'
 import { DreCard }           from '@/components/financial/DreCard'
 import { CustoKmWidget }     from '@/components/financial/CustoKmWidget'
@@ -32,11 +32,12 @@ export default async function DrePage({ searchParams }: DrePageProps) {
   const supabase = await createClient()
   const user = await getServerUser()
   if (!user) return null  // layout já redireciona
+  const admin = createAdminClient()
 
   const params   = await searchParams
 
   // Guard
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('profiles')
     .select('role, full_name, id')
     .eq('user_id', user.id)
