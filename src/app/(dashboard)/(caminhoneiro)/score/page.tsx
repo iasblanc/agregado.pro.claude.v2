@@ -1,281 +1,218 @@
-import type { Metadata }    from 'next'
-import { redirect }          from 'next/navigation'
-import { Suspense }          from 'react'
-import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
-import { Header }            from '@/components/layout/Header'
-import { Badge }             from '@/components/ui/badge'
-import { ScoreGauge }        from '@/components/credit/ScoreGauge'
-import { getCurrentScore }   from '@/services/credit'
-import { formatDate, formatBRL } from '@/lib/utils'
+export const dynamic = 'force-dynamic'
+
+import type { Metadata } from 'next'
+import { redirect }      from 'next/navigation'
+import { getServerUser, createAdminClient } from '@/lib/supabase/server'
+import { Header }        from '@/components/layout/Header'
+import { Card, CardHeader, CardBody } from '@/components/ui/card'
+import { formatBRL, formatDate }      from '@/lib/utils'
+import { CalcularScoreButton }        from './CalcularScoreButton'
 
 export const metadata: Metadata = { title: 'Score de Crédito' }
-export const dynamic = 'force-dynamic'  // 5 minutos
+
+const TIER_CONFIG: Record<string, { label: string; color: string; bg: string; desc: string }> = {
+  excelente:   { label: 'Excelente',   color: '#059669', bg: '#D1FAE5', desc: 'Acesso a melhores condições de crédito' },
+  muito_bom:   { label: 'Muito Bom',   color: '#2563EB', bg: '#DBEAFE', desc: 'Elegível para crédito com boas condições' },
+  bom:         { label: 'Bom',         color: '#7C3AED', bg: '#EDE9FE', desc: 'Elegível para crédito padrão' },
+  regular:     { label: 'Regular',     color: '#D97706', bg: '#FEF3C7', desc: 'Crédito disponível com revisão' },
+  baixo:       { label: 'Baixo',       color: '#DC2626', bg: '#FEE2E2', desc: 'Necessita mais histórico financeiro' },
+  insuficiente:{ label: 'Insuficiente',color: '#6B7280', bg: '#F3F4F6', desc: 'Lance mais dados para calcular o score' },
+}
+
+function ScoreGauge({ score }: { score: number }) {
+  const pct     = (score / 1000) * 100
+  const radius  = 70
+  const cx      = 90
+  const cy      = 90
+  const strokeW = 12
+  const circ    = 2 * Math.PI * radius
+  const arcPct  = 0.75  // 270° arco
+  const dashArr = circ * arcPct
+  const dashOff = circ * arcPct * (1 - pct / 100)
+  const startAngle = 135
+  const color =
+    score >= 800 ? '#059669' : score >= 650 ? '#2563EB' :
+    score >= 500 ? '#7C3AED' : score >= 350 ? '#D97706' : '#DC2626'
+
+  return (
+    <svg viewBox="0 0 180 120" className="w-full max-w-[200px] mx-auto">
+      {/* Track */}
+      <circle cx={cx} cy={cy} r={radius} fill="none"
+        stroke="var(--color-surface)" strokeWidth={strokeW}
+        strokeDasharray={`${dashArr} ${circ}`}
+        strokeDashoffset={0}
+        strokeLinecap="round"
+        transform={`rotate(${startAngle} ${cx} ${cy})`} />
+      {/* Progress */}
+      <circle cx={cx} cy={cy} r={radius} fill="none"
+        stroke={color} strokeWidth={strokeW}
+        strokeDasharray={`${dashArr} ${circ}`}
+        strokeDashoffset={dashOff}
+        strokeLinecap="round"
+        transform={`rotate(${startAngle} ${cx} ${cy})`}
+        style={{ transition: 'stroke-dashoffset 1s ease' }} />
+      {/* Score text */}
+      <text x={cx} y={cy - 5} textAnchor="middle"
+        fontFamily="var(--font-display, serif)" fontSize="28" fontWeight="600" fill={color}>
+        {score}
+      </text>
+      <text x={cx} y={cy + 14} textAnchor="middle"
+        fontFamily="var(--font-body, sans-serif)" fontSize="11" fill="var(--color-text-muted)">
+        de 1000
+      </text>
+    </svg>
+  )
+}
 
 export default async function ScorePage() {
-  const supabase = await createClient()
   const user = await getServerUser()
-  if (!user) return null  // layout já redireciona
+  if (!user) return null
   const admin = createAdminClient()
 
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('id, role')
-    .eq('user_id', user.id)
-    .single()
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-  if (!profile || profile.role !== 'caminhoneiro') redirect('/gestao')
+  // Score atual
+  const { data: scoreRecord } = await admin.from('credit_scores')
+    .select('*').eq('owner_id', profile.id).eq('is_current', true).maybeSingle()
 
-  const scoreData = await getCurrentScore()
+  // Histórico de lançamentos para verificar se tem dados
+  const { count: dreCount } = await admin.from('dre_entries')
+    .select('id', { count: 'exact', head: true }).eq('owner_id', profile.id)
+
+  const hasData  = (dreCount ?? 0) > 0
+  const tier     = scoreRecord ? TIER_CONFIG[scoreRecord.tier] ?? TIER_CONFIG.insuficiente : null
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Score de Crédito" subtitle="Seu score proprietário baseado em dados reais" />
+      <Header title="Score de Crédito" subtitle="Baseado nos seus dados financeiros reais" />
+      <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto max-w-2xl">
 
-      <main className="flex-1 px-lg py-xl md:px-xl">
-        <div className="max-w-2xl mx-auto space-y-xl">
-
-          {/* Aviso Phase 3 */}
-          <div
-            className="flex items-start gap-sm px-md py-sm rounded-md text-body-sm"
-            style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }}
-          >
-            <span aria-hidden="true">🔬</span>
-            <div>
-              <p className="font-medium">Score proprietário Agregado.Pro</p>
-              <p className="mt-xs opacity-90">
-                Diferente dos bureaus tradicionais, seu score é calculado sobre os seus dados reais de DRE,
-                custo/km e histórico de contratos — não sobre dados de terceiros.
-              </p>
-            </div>
-          </div>
-
-          {/* Score atual */}
-          {scoreData ? (
-            <>
-              <ScoreGauge result={scoreData.score} />
-
-              {/* Regra de crédito Phase 4 — transparência */}
-              {scoreData.score.isEligible && (
-                <div className="bg-ag-surface border border-ag-border rounded-xl p-lg space-y-md shadow-sm">
-                  <h3 className="font-display text-display-sm font-medium text-ag-primary">
-                    Como seu limite é calculado
-                  </h3>
-                  <div className="space-y-sm text-body-sm text-ag-secondary">
-                    <p>
-                      Seu limite sugerido de{' '}
-                      <strong className="text-ag-primary">{formatBRL(scoreData.score.limiteSugerido)}</strong>{' '}
-                      é calculado assim:
-                    </p>
-                    <ol className="space-y-xs pl-md list-decimal marker:text-ag-muted">
-                      <li>
-                        Lucro médio mensal:{' '}
-                        <strong className="text-ag-primary">
-                          {formatBRL(scoreData.score.receitaMediaMensal * scoreData.score.margemMediaPercent)}
-                        </strong>
-                      </li>
-                      <li>
-                        Multiplicador do seu score ({scoreData.score.score} pontos):{' '}
-                        <strong className="text-ag-primary">
-                          {scoreData.score.score >= 850 ? '6×' :
-                           scoreData.score.score >= 750 ? '5×' :
-                           scoreData.score.score >= 650 ? '4×' :
-                           scoreData.score.score >= 500 ? '3×' : '2×'}
-                        </strong>
-                      </li>
-                      <li>Resultado: limite proporcional ao seu desempenho real</li>
-                    </ol>
-                    <p className="caption text-ag-muted pt-xs">
-                      O limite é revisado mensalmente conforme o DRE atualizado.
-                      O cartão de crédito estará disponível na Phase 4.
-                    </p>
-                  </div>
+        {/* Score principal */}
+        <Card elevated>
+          <CardBody>
+            {scoreRecord && tier ? (
+              <div className="text-center space-y-md">
+                <ScoreGauge score={scoreRecord.score} />
+                <div>
+                  <span className="px-md py-xs rounded-pill text-body-sm font-medium"
+                    style={{ background: tier.bg, color: tier.color }}>
+                    {tier.label}
+                  </span>
                 </div>
-              )}
-
-              {/* Histórico de scores */}
-              <Suspense fallback={<HistoryLoading />}>
-                <ScoreHistory ownerId={profile.id} />
-              </Suspense>
-            </>
-          ) : (
-            <EmptyScore />
-          )}
-
-          {/* Open Finance */}
-          <OpenFinanceSection ownerId={profile.id} />
-        </div>
-      </main>
-    </div>
-  )
-}
-
-// ─── Histórico de scores ──────────────────────────────────────────
-
-async function ScoreHistory({ ownerId }: { ownerId: string }) {
-  const supabase = await createClient()
-
-  const { data: history } = await supabase
-    .from('credit_scores')
-    .select('score, tier, calculated_at, variacao_score')
-    .eq('owner_id', ownerId)
-    .order('calculated_at', { ascending: false })
-    .limit(6)
-
-  if (!history || history.length <= 1) return null
-
-  const tierColors: Record<string, string> = {
-    insuficiente: 'muted',
-    baixo:        'danger',
-    regular:      'warning',
-    bom:          'warning',
-    muito_bom:    'success',
-    excelente:    'success',
-  }
-
-  return (
-    <div className="bg-ag-surface border border-ag-border rounded-xl overflow-hidden shadow-sm">
-      <div className="px-lg py-md border-b border-ag-border">
-        <h3 className="font-display text-display-sm font-medium text-ag-primary">
-          Histórico de scores
-        </h3>
-      </div>
-      <div className="divide-y divide-ag-border">
-        {history.map((h: any, i: number) => (
-          <div key={h.calculated_at} className="px-lg py-md flex items-center justify-between gap-md">
-            <div>
-              <p className="text-body-sm font-medium text-ag-primary">
-                Score {h.score}
-              </p>
-              <p className="caption text-ag-muted">{formatDate(h.calculated_at)}</p>
-            </div>
-            <div className="flex items-center gap-sm">
-              {h.variacao_score !== null && i < history.length - 1 && (
-                <span
-                  className="text-body-sm font-medium"
-                  style={{
-                    color: h.variacao_score > 0 ? 'var(--color-success)' :
-                           h.variacao_score < 0 ? 'var(--color-danger)' :
-                           'var(--color-text-muted)',
-                  }}
-                >
-                  {h.variacao_score > 0 ? '+' : ''}{h.variacao_score}
-                </span>
-              )}
-              <Badge variant={(tierColors[h.tier] ?? 'muted') as any}>
-                {h.tier.replace('_', ' ')}
-              </Badge>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Open Finance ─────────────────────────────────────────────────
-
-async function OpenFinanceSection({ ownerId }: { ownerId: string }) {
-  const supabase = await createClient()
-
-  const { data: connections } = await supabase
-    .from('open_finance_connections')
-    .select('*')
-    .eq('owner_id', ownerId)
-    .eq('is_active', true)
-
-  return (
-    <div className="bg-ag-surface border border-ag-border rounded-xl p-lg space-y-md shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="overline">Open Finance</p>
-          <h3 className="font-display text-display-sm font-medium text-ag-primary">
-            Bancos conectados
-          </h3>
-        </div>
-        <Badge variant={connections && connections.length > 0 ? 'success' : 'muted'} dot>
-          {connections?.length ?? 0} conectado{(connections?.length ?? 0) !== 1 ? 's' : ''}
-        </Badge>
-      </div>
-
-      {connections && connections.length > 0 ? (
-        <div className="space-y-sm">
-          {(connections as any[]).map((conn) => (
-            <div
-              key={conn.id}
-              className="flex items-center gap-md px-md py-sm rounded-md bg-ag-bg border border-ag-border"
-            >
-              <div className="w-8 h-8 rounded-md bg-ag-surface flex items-center justify-center text-caption font-medium text-ag-muted">
-                🏦
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-body-sm font-medium text-ag-primary truncate">
-                  {conn.institution_name}
-                </p>
+                <p className="text-body-sm text-ag-secondary">{tier.desc}</p>
                 <p className="caption text-ag-muted">
-                  Sincronizado em{' '}
-                  {conn.last_sync_at ? formatDate(conn.last_sync_at) : 'Aguardando...'}
+                  Calculado em {formatDate(scoreRecord.calculated_at)} · {scoreRecord.months_of_data} meses de histórico
                 </p>
               </div>
-              <Badge variant={conn.sync_status === 'synced' ? 'success' : 'warning'}>
-                {conn.sync_status === 'synced' ? 'Ativo' : 'Pendente'}
-              </Badge>
+            ) : (
+              <div className="text-center py-lg space-y-md">
+                <p className="text-[48px]">📊</p>
+                <p className="text-body font-medium text-ag-primary">Score ainda não calculado</p>
+                <p className="text-body-sm text-ag-secondary">
+                  {hasData
+                    ? 'Você tem lançamentos no DRE. Calcule agora o seu score.'
+                    : 'Lance receitas e custos no DRE para gerar seu score de crédito.'}
+                </p>
+              </div>
+            )}
+            <div className="mt-lg">
+              <CalcularScoreButton hasData={hasData} hasScore={!!scoreRecord} />
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-md">
-          <p className="text-body text-ag-secondary">
-            Conecte suas contas em outros bancos via Open Finance para enriquecer seu score
-            com dados de pagamento e fluxo financeiro adicional.
-          </p>
-          <p className="caption text-ag-muted">
-            🔒 Usamos Open Finance — nunca pedimos sua senha bancária. Somente você autoriza o acesso.
-          </p>
-          <button
-            disabled
-            className="inline-flex items-center gap-sm px-md py-sm rounded-md text-body-sm font-medium opacity-50 cursor-not-allowed"
-            style={{ background: 'var(--color-overlay)', color: 'var(--color-text-secondary)' }}
-            title="Em breve"
-          >
-            Conectar banco via Open Finance
-            <Badge variant="muted">Em breve</Badge>
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
+          </CardBody>
+        </Card>
 
-// ─── Empty state ──────────────────────────────────────────────────
+        {/* Fatores do score */}
+        {scoreRecord && (
+          <Card>
+            <CardHeader label="Fatores que compõem o score" />
+            <CardBody>
+              <div className="space-y-md">
+                {[
+                  { label: 'Estabilidade de receita', pts: scoreRecord.driver_receita_estabilidade, max: 250 },
+                  { label: 'Margem operacional',      pts: scoreRecord.driver_margem_operacional,   max: 250 },
+                  { label: 'Meses positivos',         pts: scoreRecord.driver_regularidade_contratos, max: 200 },
+                  { label: 'Volume de histórico',     pts: scoreRecord.driver_historico_pagamentos, max: 150 },
+                  { label: 'Tendência recente',       pts: scoreRecord.driver_custo_km_tendencia,  max: 150 },
+                ].map(f => (
+                  <div key={f.label}>
+                    <div className="flex justify-between mb-xs">
+                      <span className="text-body-sm text-ag-secondary">{f.label}</span>
+                      <span className="text-body-sm font-medium text-ag-primary">{f.pts}/{f.max}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full" style={{ background: 'var(--color-surface)' }}>
+                      <div className="h-full rounded-full" style={{
+                        width: `${(f.pts / f.max) * 100}%`,
+                        background: 'var(--color-accent)',
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        )}
 
-function EmptyScore() {
-  return (
-    <div className="text-center py-[var(--space-4xl)] space-y-xl max-w-sm mx-auto">
-      <div className="text-[56px]" aria-hidden="true">📊</div>
-      <div className="space-y-md">
-        <h2 className="font-display text-display-sm font-medium text-ag-primary">
-          Score ainda não calculado
-        </h2>
-        <p className="text-body text-ag-secondary">
-          Você precisa de pelo menos 3 meses de lançamentos no DRE para que seu score seja calculado.
-        </p>
-        <p className="caption text-ag-muted">
-          Registre receitas e despesas mensalmente para construir seu histórico.
-        </p>
-      </div>
-    </div>
-  )
-}
+        {/* Métricas financeiras */}
+        {scoreRecord && (
+          <Card>
+            <CardHeader label="Suas métricas" />
+            <CardBody>
+              <div className="grid grid-cols-2 gap-md">
+                {[
+                  { label: 'Receita média/mês',  val: scoreRecord.receita_media_mensal ? formatBRL(scoreRecord.receita_media_mensal) : '—' },
+                  { label: 'Margem média',        val: scoreRecord.margem_media_percent ? `${Number(scoreRecord.margem_media_percent).toFixed(1)}%` : '—' },
+                  { label: 'Custo/km médio',      val: scoreRecord.custo_km_medio ? formatBRL(scoreRecord.custo_km_medio) + '/km' : '—' },
+                  { label: 'Meses positivos',     val: `${scoreRecord.meses_positivos} de ${scoreRecord.months_of_data}` },
+                ].map(m => (
+                  <div key={m.label}>
+                    <p className="caption text-ag-muted mb-xs">{m.label}</p>
+                    <p className="text-body font-medium text-ag-primary">{m.val}</p>
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        )}
 
-function HistoryLoading() {
-  return (
-    <div className="bg-ag-surface border border-ag-border rounded-xl p-lg animate-pulse space-y-md">
-      <div className="h-4 bg-ag-border rounded w-1/3" />
-      <div className="space-y-sm">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-12 bg-ag-border rounded" />
-        ))}
-      </div>
+        {/* Limite sugerido */}
+        {scoreRecord?.is_eligible && scoreRecord.limite_sugerido && (
+          <Card>
+            <CardBody>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="caption text-ag-muted mb-xs">Limite pré-aprovado</p>
+                  <p className="font-display text-[28px] font-medium" style={{ color: 'var(--color-success)' }}>
+                    {formatBRL(Number(scoreRecord.limite_sugerido))}
+                  </p>
+                  <p className="caption text-ag-muted mt-xs">Baseado na sua receita média mensal</p>
+                </div>
+                <span className="text-[32px]">✅</span>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Como melhorar */}
+        <Card>
+          <CardHeader label="Como melhorar seu score" />
+          <CardBody>
+            <div className="space-y-sm">
+              {[
+                '📋 Lance receitas e custos regularmente todos os meses',
+                '📈 Mantenha margem operacional acima de 15%',
+                '📅 Quanto mais histórico, mais confiável o score',
+                '🎯 Meses no positivo aumentam diretamente o score',
+              ].map(tip => (
+                <p key={tip} className="text-body-sm text-ag-secondary flex items-start gap-sm">
+                  <span className="shrink-0">{tip.slice(0, 2)}</span>
+                  <span>{tip.slice(3)}</span>
+                </p>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      </main>
     </div>
   )
 }
