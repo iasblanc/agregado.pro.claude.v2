@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter }               from 'next/navigation'
+import { useToast }                from '@/components/ui/toast'
 import { Header }  from '@/components/layout/Header'
 import { Button }  from '@/components/ui/button'
 import { Input }   from '@/components/ui/input'
@@ -34,6 +35,7 @@ export function LancamentoClient({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const { success, error: toastError } = useToast()
 
   const [tipo,        setTipo]        = useState<string>(preselectedType ?? 'receita')
   const [categoria,   setCategoria]   = useState('')
@@ -78,11 +80,11 @@ export function LancamentoClient({
         return
       }
 
-      setSuccess(true)
+      success('Lançamento salvo!')
       setTimeout(() => {
         router.push('/gestao')
         router.refresh()
-      }, 800)
+      }, 600)
     })
   }
 

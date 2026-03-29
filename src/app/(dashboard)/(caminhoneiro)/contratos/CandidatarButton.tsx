@@ -1,12 +1,13 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { useRouter }               from 'next/navigation'
-import { Button } from '@/components/ui/button'
+import { useToast }  from '@/components/ui/toast'
+import { Button }    from '@/components/ui/button'
 
 export function CandidatarButton({ contractId, profileId }: { contractId: string; profileId: string }) {
   const [isPending, startTransition] = useTransition()
   const [done,  setDone]  = useState(false)
-  const [error, setError] = useState('')
+  const { success, error: toastError } = useToast()
   const router = useRouter()
 
   async function handleCandidatar() {
@@ -19,9 +20,10 @@ export function CandidatarButton({ contractId, profileId }: { contractId: string
       })
       if (!res.ok) {
         const d = await res.json()
-        setError(d.error ?? 'Erro ao candidatar')
+        toastError(d.error ?? 'Erro ao candidatar')
         return
       }
+      success('Candidatura enviada com sucesso!')
       setDone(true)
       router.refresh()
     })
@@ -29,18 +31,10 @@ export function CandidatarButton({ contractId, profileId }: { contractId: string
 
   if (done) return (
     <span className="px-md py-sm rounded-md text-body-sm font-medium"
-      style={{ background: '#D1FAE5', color: '#059669' }}>
+      style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
       ✓ Candidatura enviada
     </span>
   )
 
-  if (error) return (
-    <span className="text-body-sm" style={{ color: 'var(--color-danger)' }}>⚠ {error}</span>
-  )
-
-  return (
-    <Button size="sm" loading={isPending} onClick={handleCandidatar}>
-      Candidatar-se
-    </Button>
-  )
+  return <Button size="sm" loading={isPending} onClick={handleCandidatar}>Candidatar-se</Button>
 }

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link                        from 'next/link'
 import { usePathname }             from 'next/navigation'
 import { useUser }                 from '@/hooks/useUser'
+import { logoutAction }            from '@/app/(auth)/login/actions'
 import { RoleBadge }               from '@/components/ui/badge'
 import { getInitials }             from '@/lib/utils'
 
@@ -149,6 +150,16 @@ export function Sidebar() {
             </div>
           </Link>
         ) : null}
+        {/* Logout */}
+        {!isLoading && profile && (
+          <button
+            onClick={() => logoutAction()}
+            className="w-full flex items-center gap-sm px-md py-sm text-ag-muted hover:text-ag-secondary transition-colors text-body-sm"
+          >
+            <span aria-hidden="true">↩</span>
+            Sair
+          </button>
+        )}
       </div>
     </aside>
   )

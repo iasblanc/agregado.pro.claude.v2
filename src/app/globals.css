@@ -255,3 +255,18 @@ button {
   background: var(--color-accent);
   color: var(--color-cta-text);
 }
+
+/* ─── Animations ─────────────────────────────────────────────── */
+@keyframes slide-in-up {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.animate-in {
+  animation: slide-in-up 0.2s ease-out;
+}
+
+/* ─── Safe area (iOS bottom bar) ─────────────────────────────── */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

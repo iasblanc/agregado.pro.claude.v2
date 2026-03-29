@@ -71,9 +71,9 @@ export default function RootLayout({
       className={`${playfairDisplay.variable} ${dmSans.variable}`}
       suppressHydrationWarning
     >
-      <body className="font-body bg-ag-bg text-ag-primary antialiased">
+      <ToastProvider><body className="font-body bg-ag-bg text-ag-primary antialiased">
         {children}
-      </body>
+      </body></ToastProvider>
     </html>
   )
 }
