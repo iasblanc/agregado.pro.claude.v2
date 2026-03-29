@@ -44,7 +44,7 @@ export function LancamentoClient({
   const [kmRodados,   setKmRodados]   = useState('')
   const [vehicleId,   setVehicleId]   = useState(vehicles[0]?.id ?? '')
   const [error,       setError]       = useState('')
-  const [success,     setSuccess]     = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   const categorias = CATEGORIAS[tipo as keyof typeof CATEGORIAS] ?? []
 
@@ -208,7 +208,7 @@ export function LancamentoClient({
             </div>
           )}
 
-          {success && (
+          {showSuccess && (
             <div className="px-md py-sm rounded-md text-body-sm"
               style={{ background: '#F0FDF4', color: '#15803D' }}>
               ✓ Lançamento salvo!
