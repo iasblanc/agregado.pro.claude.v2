@@ -43,16 +43,16 @@ export function LancamentoClient({
   const [valor,       setValor]       = useState('')
   const [kmRodados,   setKmRodados]   = useState('')
   const [vehicleId,   setVehicleId]   = useState(vehicles[0]?.id ?? '')
-  const [error,       setError]       = useState('')
+  const [localError,  setLocalError]  = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
 
   const categorias = CATEGORIAS[tipo as keyof typeof CATEGORIAS] ?? []
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!categoria) { setError('Selecione uma categoria'); return }
-    if (!valor || Number(valor.replace(',', '.')) <= 0) { setError('Valor inválido'); return }
-    setError('')
+    if (!categoria) { setLocalError('Selecione uma categoria'); return }
+    if (!valor || Number(valor.replace(',', '.')) <= 0) { setLocalError('Valor inválido'); return }
+    setLocalError('')
 
     startTransition(async () => {
       const body: Record<string, unknown> = {
@@ -76,7 +76,7 @@ export function LancamentoClient({
 
       if (!res.ok) {
         const d = await res.json()
-        setError(d.error ?? 'Erro ao salvar')
+        setLocalError(d.error ?? 'Erro ao salvar')
         return
       }
 
@@ -201,10 +201,10 @@ export function LancamentoClient({
           )}
 
           {/* Erro */}
-          {error && (
+          {localError && (
             <div className="px-md py-sm rounded-md text-body-sm"
               style={{ background: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-border)' }}>
-              ⚠ {error}
+              ⚠ {localError}
             </div>
           )}
 
