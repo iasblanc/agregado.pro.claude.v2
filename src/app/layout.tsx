@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
+import { Providers } from '@/components/Providers'
 import './globals.css'
 
 // ─── Tipografia AllYouCan Design System ──────────────────────────
@@ -41,7 +42,6 @@ export const metadata: Metadata = {
     index: process.env.NODE_ENV === 'production',
     follow: process.env.NODE_ENV === 'production',
   },
-  // OpenGraph
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1, // Evita zoom acidental em inputs mobile
+  maximumScale: 1,
   themeColor: '#F5F2EC',
 }
 
@@ -71,9 +71,11 @@ export default function RootLayout({
       className={`${playfairDisplay.variable} ${dmSans.variable}`}
       suppressHydrationWarning
     >
-      <ToastProvider><body className="font-body bg-ag-bg text-ag-primary antialiased">
-        {children}
-      </body></ToastProvider>
+      <body className="font-body bg-ag-bg text-ag-primary antialiased">
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   )
 }
