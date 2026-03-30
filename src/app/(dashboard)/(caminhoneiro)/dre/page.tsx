@@ -53,7 +53,7 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
   const period    = params.period ?? getCurrentPeriod()
   const periods   = getLastPeriods(12)
 
-  const [{ data: entries }, { data: allEntries }] = await Promise.all([
+  const [{ data: entries }, { data: historyEntries }] = await Promise.all([
     admin.from('dre_entries').select('*').eq('owner_id', profile.id).eq('period', period).order('created_at', { ascending: false }),
     admin.from('dre_entries').select('period, entry_type, amount').eq('owner_id', profile.id).order('period', { ascending: false }).limit(300),
   ])
@@ -116,7 +116,7 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
         {/* Gráfico de evolução */}
         {(() => {
           const byP: Record<string, { receita: number; custo: number }> = {}
-          for (const e of (allEntries ?? [])) {
+          for (const e of (historyEntries ?? [])) {
             if (!byP[e.period]) byP[e.period] = { receita: 0, custo: 0 }
             if (e.entry_type === 'receita') byP[e.period].receita += Number(e.amount)
             else byP[e.period].custo += Number(e.amount)
