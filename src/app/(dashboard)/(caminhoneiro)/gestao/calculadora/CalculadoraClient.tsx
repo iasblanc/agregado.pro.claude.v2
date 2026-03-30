@@ -1,209 +1,141 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Header }    from '@/components/layout/Header'
 import { Card, CardHeader, CardBody } from '@/components/ui/card'
-import { Button }    from '@/components/ui/button'
-import { Input }     from '@/components/ui/input'
+import { Input }  from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { formatBRL } from '@/lib/utils'
 
-const DEFAULTS = {
-  // Fixos mensais
-  parcela:       1800,
-  seguro:        380,
-  ipva:          150,
-  rastreador:    80,
-  outros_fixos:  120,
-  // Variáveis por km
-  diesel_km:     0,        // calculado
-  consumo_lkm:   2.5,      // km por litro diesel (cavalo)
-  diesel_preco:  6.2,      // R$/litro
-  pedagio_km:    0.12,     // R$/km
-  pneu_km:       0.08,     // R$/km
-  manutencao_km: 0.06,     // R$/km
-  // Operação
-  km_mes:        8000,
-  // Receita
-  valor_frete:   0,
-  km_frete:      1250,
-}
+interface Props { custoKmReal: number | null }
 
-function num(v: string) { return parseFloat(v.replace(',', '.')) || 0 }
+export function CalculadoraClient({ custoKmReal }: Props) {
+  const [valorFrete, setValorFrete]   = useState('')
+  const [distanciaKm, setDistanciaKm] = useState('')
+  const [custoKm, setCustoKm]         = useState(custoKmReal ? String(custoKmReal.toFixed(2)) : '')
+  const [diasViagem, setDiasViagem]   = useState('2')
+  const [pedagio, setPedagio]         = useState('')
 
-export function CalculadoraClient() {
-  const router = useRouter()
-  const [f, setF] = useState(DEFAULTS)
-  const set = (k: keyof typeof DEFAULTS, v: number) => setF(prev => ({ ...prev, [k]: v }))
-  const val = (k: keyof typeof DEFAULTS) => String(f[k])
+  const valor = Number(valorFrete.replace(',', '.')) || 0
+  const km    = Number(distanciaKm.replace(',', '.')) || 0
+  const cKm   = Number(custoKm.replace(',', '.')) || 0
+  const dias  = Number(diasViagem) || 0
+  const ped   = Number(pedagio.replace(',', '.')) || 0
 
-  // Cálculos
-  const custoFixoMensal  = f.parcela + f.seguro + f.ipva + f.rastreador + f.outros_fixos
-  const dieselKm         = f.diesel_preco / f.consumo_lkm
-  const custoVarKm       = dieselKm + f.pedagio_km + f.pneu_km + f.manutencao_km
-  const custoFixoKm      = f.km_mes > 0 ? custoFixoMensal / f.km_mes : 0
-  const custoTotalKm     = custoVarKm + custoFixoKm
+  const custoTotal   = (cKm * km) + ped
+  const lucro        = valor - custoTotal
+  const margem       = valor > 0 ? (lucro / valor) * 100 : 0
+  const valorPorKm   = km > 0 ? valor / km : 0
+  const lucrosPorDia = dias > 0 ? lucro / dias : 0
 
-  // Frete
-  const receitaKm        = f.km_frete > 0 ? f.valor_frete / f.km_frete : 0
-  const margemKm         = receitaKm - custoTotalKm
-  const margemPct        = receitaKm > 0 ? (margemKm / receitaKm) * 100 : 0
-  const lucroPrejuizo    = f.valor_frete - (custoTotalKm * f.km_frete)
-  const pontoEquilíbrio  = custoTotalKm > 0 ? custoFixoMensal / (receitaKm - custoVarKm) : 0
+  const hasCalc = valor > 0 && km > 0 && cKm > 0
 
-  const viabilidade =
-    margemPct >= 15 ? { label: '✅ Frete saudável',     color: '#059669', bg: '#D1FAE5' } :
-    margemPct >= 0  ? { label: '⚠️ No limite',          color: '#D97706', bg: '#FEF3C7' } :
-                      { label: '❌ Abaixo do custo',    color: '#DC2626', bg: '#FEE2E2' }
+  const veredito = !hasCalc ? null
+    : margem >= 20 ? { label: '✅ Ótimo contrato', color: '#059669', bg: '#D1FAE5', desc: `Margem confortável de ${margem.toFixed(1)}%` }
+    : margem >= 10 ? { label: '✅ Bom contrato',   color: '#059669', bg: '#D1FAE5', desc: `Margem de ${margem.toFixed(1)}%` }
+    : margem >= 0  ? { label: '⚠️ No limite',       color: '#D97706', bg: '#FEF3C7', desc: `Margem apertada: ${margem.toFixed(1)}%` }
+    :                { label: '❌ Abaixo do custo', color: '#DC2626', bg: '#FEE2E2', desc: `Prejuízo de ${formatBRL(Math.abs(lucro))}` }
 
-  const iRow = (label: string, k: keyof typeof DEFAULTS, suffix = '') => (
-    <div key={label} className="flex items-center justify-between gap-md">
-      <span className="text-body-sm text-ag-secondary">{label}</span>
-      <div className="flex items-center gap-xs">
-        <input
-          type="number" step="0.01"
-          value={f[k]} onChange={e => set(k, num(e.target.value))}
-          className="w-24 px-sm py-xs border border-ag-border rounded-md text-body-sm text-right bg-ag-bg text-ag-primary"
-          style={{ outline: 'none' }}
-        />
-        {suffix && <span className="text-body-sm text-ag-muted w-8">{suffix}</span>}
-      </div>
-    </div>
-  )
+  function handleClear() {
+    setValorFrete(''); setDistanciaKm(''); setDiasViagem('2'); setPedagio('')
+    if (custoKmReal) setCustoKm(custoKmReal.toFixed(2))
+  }
 
   return (
-    <div className="flex flex-col h-full">
-      <Header title="Calculadora de Custo/km" subtitle="Descubra o custo real por quilômetro" />
-      <main className="flex-1 px-lg py-xl md:px-xl overflow-auto">
-        <div className="max-w-2xl mx-auto space-y-xl">
+    <div className="max-w-lg mx-auto space-y-xl">
 
-          {/* Resultado principal */}
-          <Card elevated>
-            <CardBody>
-              <div className="text-center space-y-sm py-sm">
-                <p className="overline">Seu custo real por km</p>
-                <p className="font-display text-[48px] font-medium text-ag-primary" style={{ lineHeight: 1 }}>
-                  {formatBRL(custoTotalKm)}
-                  <span className="text-[20px] text-ag-muted font-normal">/km</span>
-                </p>
-                <div className="flex justify-center gap-lg text-body-sm text-ag-secondary pt-sm">
-                  <span>Fixo: {formatBRL(custoFixoKm)}/km</span>
-                  <span>Variável: {formatBRL(custoVarKm)}/km</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Custos fixos */}
-          <Card>
-            <CardHeader label="Custos fixos mensais" />
-            <CardBody>
-              <div className="space-y-md">
-                {iRow('Parcela financiamento', 'parcela', 'R$')}
-                {iRow('Seguro do caminhão', 'seguro', 'R$')}
-                {iRow('IPVA / Licenciamento', 'ipva', 'R$')}
-                {iRow('Rastreador', 'rastreador', 'R$')}
-                {iRow('Outros fixos', 'outros_fixos', 'R$')}
-                <div className="flex justify-between pt-sm border-t border-ag-border">
-                  <span className="text-body-sm font-medium text-ag-primary">Total fixo/mês</span>
-                  <span className="text-body-sm font-medium text-ag-primary">{formatBRL(custoFixoMensal)}</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Custos variáveis */}
-          <Card>
-            <CardHeader label="Custos variáveis por km" />
-            <CardBody>
-              <div className="space-y-md">
-                <div className="flex items-center justify-between gap-md">
-                  <span className="text-body-sm text-ag-secondary">Consumo do caminhão</span>
-                  <div className="flex items-center gap-xs">
-                    <input type="number" step="0.1" value={f.consumo_lkm}
-                      onChange={e => set('consumo_lkm', num(e.target.value))}
-                      className="w-24 px-sm py-xs border border-ag-border rounded-md text-body-sm text-right bg-ag-bg text-ag-primary"
-                      style={{ outline: 'none' }} />
-                    <span className="text-body-sm text-ag-muted w-8">km/L</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between gap-md">
-                  <span className="text-body-sm text-ag-secondary">Preço diesel</span>
-                  <div className="flex items-center gap-xs">
-                    <input type="number" step="0.01" value={f.diesel_preco}
-                      onChange={e => set('diesel_preco', num(e.target.value))}
-                      className="w-24 px-sm py-xs border border-ag-border rounded-md text-body-sm text-right bg-ag-bg text-ag-primary"
-                      style={{ outline: 'none' }} />
-                    <span className="text-body-sm text-ag-muted w-8">R$/L</span>
-                  </div>
-                </div>
-                <div className="flex justify-between pt-xs">
-                  <span className="text-body-sm text-ag-muted">Diesel/km calculado</span>
-                  <span className="text-body-sm text-ag-primary">{formatBRL(dieselKm)}/km</span>
-                </div>
-                {iRow('Pedágios', 'pedagio_km', '/km')}
-                {iRow('Pneus/borracharia', 'pneu_km', '/km')}
-                {iRow('Manutenção/peças', 'manutencao_km', '/km')}
-                <div className="flex justify-between pt-sm border-t border-ag-border">
-                  <span className="text-body-sm font-medium text-ag-primary">Total variável/km</span>
-                  <span className="text-body-sm font-medium text-ag-primary">{formatBRL(custoVarKm)}/km</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Operação */}
-          <Card>
-            <CardHeader label="Operação mensal" />
-            <CardBody>
-              <div className="space-y-md">
-                {iRow('Km rodados por mês', 'km_mes', 'km')}
-                <div className="flex justify-between pt-sm border-t border-ag-border">
-                  <span className="text-body-sm font-medium text-ag-primary">Custo fixo por km</span>
-                  <span className="text-body-sm font-medium text-ag-primary">{formatBRL(custoFixoKm)}/km</span>
-                </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Análise de frete */}
-          <Card>
-            <CardHeader label="Analisar um frete" />
-            <CardBody>
-              <div className="space-y-md">
-                {iRow('Valor do frete', 'valor_frete', 'R$')}
-                {iRow('Distância da rota', 'km_frete', 'km')}
-
-                {f.valor_frete > 0 && f.km_frete > 0 && (
-                  <div className="space-y-md pt-sm border-t border-ag-border">
-                    <div className="px-md py-sm rounded-md"
-                      style={{ background: viabilidade.bg, color: viabilidade.color }}>
-                      <p className="text-body-sm font-medium">{viabilidade.label}</p>
-                      <p className="text-body-sm mt-xs">
-                        Margem: {margemPct.toFixed(1)}% · {lucroPrejuizo >= 0 ? 'Lucro' : 'Prejuízo'}: {formatBRL(Math.abs(lucroPrejuizo))}
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-md text-sm">
-                      <div>
-                        <p className="caption text-ag-muted">Receita/km</p>
-                        <p className="text-body-sm font-medium text-ag-primary">{formatBRL(receitaKm)}/km</p>
-                      </div>
-                      <div>
-                        <p className="caption text-ag-muted">Custo/km</p>
-                        <p className="text-body-sm font-medium text-ag-primary">{formatBRL(custoTotalKm)}/km</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardBody>
-          </Card>
-
-          <Button variant="secondary" fullWidth onClick={() => router.back()}>
-            ← Voltar
-          </Button>
+      {/* Aviso custo/km do DRE */}
+      {custoKmReal ? (
+        <div className="px-md py-sm rounded-md text-body-sm"
+          style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8' }}>
+          💡 Usando seu custo real do DRE: <strong>{formatBRL(custoKmReal)}/km</strong>
         </div>
-      </main>
+      ) : (
+        <div className="px-md py-sm rounded-md text-body-sm"
+          style={{ background: '#FFFBEB', border: '1px solid #FDE68A', color: '#92400E' }}>
+          ⚠ Lance custos no DRE para calcular com seu custo real. Ou informe manualmente abaixo.
+        </div>
+      )}
+
+      {/* Inputs */}
+      <Card>
+        <CardHeader label="Dados do frete" />
+        <CardBody>
+          <div className="space-y-lg">
+            <Input label="Valor do frete (R$)" name="valor" inputMode="decimal"
+              value={valorFrete} onChange={e => setValorFrete(e.target.value.replace(/[^\d,]/g,''))}
+              placeholder="Ex: 8.000" />
+            <Input label="Distância (km)" name="km" inputMode="decimal"
+              value={distanciaKm} onChange={e => setDistanciaKm(e.target.value.replace(/[^\d,]/g,''))}
+              placeholder="Ex: 1.250" />
+            <Input label="Seu custo por km (R$/km)" name="custokm" inputMode="decimal"
+              value={custoKm} onChange={e => setCustoKm(e.target.value.replace(/[^\d,]/g,''))}
+              placeholder="Ex: 1,87" />
+            <div className="grid grid-cols-2 gap-md">
+              <Input label="Dias de viagem" name="dias" type="number" min="1"
+                value={diasViagem} onChange={e => setDiasViagem(e.target.value)} />
+              <Input label="Pedágio estimado (R$)" name="pedagio" inputMode="decimal"
+                value={pedagio} onChange={e => setPedagio(e.target.value.replace(/[^\d,]/g,''))}
+                placeholder="0,00" />
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Resultado */}
+      {hasCalc && (
+        <Card elevated>
+          <CardHeader label="Análise do frete" />
+          <CardBody>
+            {/* Veredito */}
+            {veredito && (
+              <div className="px-md py-md rounded-md mb-xl"
+                style={{ background: veredito.bg, border: `1px solid ${veredito.color}30` }}>
+                <p className="text-body font-medium" style={{ color: veredito.color }}>{veredito.label}</p>
+                <p className="text-body-sm mt-xs" style={{ color: veredito.color, opacity: 0.8 }}>{veredito.desc}</p>
+              </div>
+            )}
+
+            {/* Números */}
+            <div className="grid grid-cols-2 gap-md">
+              {[
+                { label: 'Valor do frete',  val: formatBRL(valor),       highlight: false },
+                { label: 'Custo estimado',  val: formatBRL(custoTotal),  highlight: false },
+                { label: 'Lucro líquido',   val: formatBRL(lucro),       highlight: true, color: lucro >= 0 ? 'var(--color-success)' : 'var(--color-danger)' },
+                { label: 'Margem',          val: `${margem.toFixed(1)}%`, highlight: true, color: margem >= 10 ? 'var(--color-success)' : margem >= 0 ? 'var(--color-warning)' : 'var(--color-danger)' },
+                { label: 'R$/km recebido',  val: formatBRL(valorPorKm) + '/km', highlight: false },
+                { label: 'Lucro/dia',       val: formatBRL(lucrosPorDia), highlight: false },
+              ].map(item => (
+                <div key={item.label} className="py-sm border-b border-ag-border">
+                  <p className="caption text-ag-muted mb-xs">{item.label}</p>
+                  <p className="text-body font-medium" style={{ color: item.highlight && item.color ? item.color : 'var(--color-text-primary)' }}>
+                    {item.val}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Barra de composição */}
+            {valor > 0 && (
+              <div className="mt-lg">
+                <p className="caption text-ag-muted mb-sm">Composição do valor do frete</p>
+                <div className="h-4 rounded-full overflow-hidden flex"
+                  style={{ background: 'var(--color-surface)' }}>
+                  <div style={{ width: `${Math.max(0, Math.min(100, (custoTotal / valor) * 100))}%`, background: 'var(--color-danger)', borderRadius: 'var(--radius-pill) 0 0 var(--radius-pill)' }} />
+                  {lucro > 0 && (
+                    <div style={{ width: `${(lucro / valor) * 100}%`, background: 'var(--color-success)' }} />
+                  )}
+                </div>
+                <div className="flex justify-between mt-xs">
+                  <span className="caption" style={{ color: 'var(--color-danger)' }}>Custo {((custoTotal / valor) * 100).toFixed(0)}%</span>
+                  {lucro > 0 && <span className="caption" style={{ color: 'var(--color-success)' }}>Lucro {((lucro / valor) * 100).toFixed(0)}%</span>}
+                </div>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
+
+      <Button variant="secondary" fullWidth onClick={handleClear}>Limpar</Button>
     </div>
   )
 }

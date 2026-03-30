@@ -161,7 +161,7 @@ export default async function ScorePage() {
               <div className="grid grid-cols-2 gap-md">
                 {[
                   { label: 'Receita média/mês',  val: scoreRecord.receita_media_mensal ? formatBRL(scoreRecord.receita_media_mensal) : '—' },
-                  { label: 'Margem média',        val: scoreRecord.margem_media_percent ? `${Number(scoreRecord.margem_media_percent).toFixed(1)}%` : '—' },
+                  { label: 'Margem média',        val: scoreRecord.margem_media_percent ? `${(Number(scoreRecord.margem_media_percent) * 100).toFixed(1)}%` : '—' },
                   { label: 'Custo/km médio',      val: scoreRecord.custo_km_medio ? formatBRL(scoreRecord.custo_km_medio) + '/km' : '—' },
                   { label: 'Meses positivos',     val: `${scoreRecord.meses_positivos} de ${scoreRecord.months_of_data}` },
                 ].map(m => (

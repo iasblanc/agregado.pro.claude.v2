@@ -128,7 +128,7 @@ export async function POST() {
       driver_custo_km_tendencia:     d5,
       driver_sazonalidade:           0,
       receita_media_mensal:          receitaMedia,
-      margem_media_percent:          margemMedia,
+      margem_media_percent:          margemMedia / 100,  // armazenado como decimal 0-1
       custo_km_medio:                custoKmMedio,
       meses_positivos:               mesesPositivos,
       limite_sugerido:               limiteSugerido,
