@@ -25,6 +25,11 @@ function calcDRE(entries: Array<{ entry_type: string; amount: number; km_referen
   return { receita, custoFixo, custoVar, pessoal, totalCusto, resultado, kmTotal, custoKm, margem }
 }
 
+
+const ENTRY_ICONS: Record<string, string> = {
+  receita: '💵', custo_fixo: '📌', custo_variavel: '🔄', pessoal: '👤',
+}
+
 export default async function GestaoPage() {
   const user = await getServerUser()
   if (!user) return null
@@ -38,12 +43,14 @@ export default async function GestaoPage() {
   const periodLabel = formatPeriod(period)
 
   // Buscar lançamentos do mês atual e anterior
-  const [{ data: entries }, { data: entriesAnterior }, { data: vehicles }] = await Promise.all([
+  const [{ data: entries }, { data: entriesAnterior }, { data: vehicles }, { data: recentEntries }] = await Promise.all([
     admin.from('dre_entries').select('*').eq('owner_id', profile.id).eq('period', period),
     prevPeriod
       ? admin.from('dre_entries').select('*').eq('owner_id', profile.id).eq('period', prevPeriod)
       : Promise.resolve({ data: [] as never[] }),
     admin.from('vehicles').select('id, brand, model, plate').eq('owner_id', profile.id).eq('is_active', true),
+    admin.from('dre_entries').select('id, entry_type, category, description, amount, created_at')
+      .eq('owner_id', profile.id).order('created_at', { ascending: false }).limit(5),
   ])
 
   const dre     = calcDRE(entries ?? [])
@@ -221,6 +228,34 @@ export default async function GestaoPage() {
           </Card>
         )}
 
+
+        {/* Últimos lançamentos */}
+        {hasData && recentEntries && recentEntries.length > 0 && (
+          <div className="rounded-xl border border-ag-border overflow-hidden" style={{ background: 'var(--color-bg)' }}>
+            <div className="flex items-center justify-between px-lg py-md border-b border-ag-border">
+              <p className="text-body-sm font-medium text-ag-primary">Últimos lançamentos</p>
+              <Link href="/dre" className="caption text-ag-secondary hover:text-ag-primary">
+                Ver todos →
+              </Link>
+            </div>
+            <div className="divide-y divide-ag-border">
+              {recentEntries.map((e: { id: string; entry_type: string; category: string; description: string; amount: number; created_at: string }) => (
+                <div key={e.id} className="flex items-center gap-md px-lg py-sm">
+                  <span className="text-[18px] shrink-0">{ENTRY_ICONS[e.entry_type] ?? '📎'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body-sm text-ag-primary truncate">{e.description}</p>
+                    <p className="caption text-ag-muted">{e.category}</p>
+                  </div>
+                  <span className="text-body-sm font-medium shrink-0"
+                    style={{ color: e.entry_type === 'receita' ? 'var(--color-success)' : 'var(--color-text-primary)' }}>
+                    {e.entry_type === 'receita' ? '+' : '-'}{formatBRL(Number(e.amount))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Lançamento rápido — inline */}
         {hasData && (
           <div className="rounded-xl border border-ag-border p-lg" style={{ background: 'var(--color-bg)' }}>
@@ -269,6 +304,15 @@ export default async function GestaoPage() {
                   <p className="text-[24px] mb-sm">📋</p>
                   <p className="text-body-sm font-medium text-ag-primary">Contratos</p>
                   <p className="caption text-ag-muted mt-xs">Ver vagas disponíveis</p>
+                </CardBody>
+              </Card>
+            </Link>
+            <Link href="/gestao/relatorio">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardBody>
+                  <p className="text-[24px] mb-sm">📑</p>
+                  <p className="text-body-sm font-medium text-ag-primary">Relatório</p>
+                  <p className="caption text-ag-muted mt-xs">DRE detalhado</p>
                 </CardBody>
               </Card>
             </Link>
