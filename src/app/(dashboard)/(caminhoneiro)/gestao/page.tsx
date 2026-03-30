@@ -224,6 +224,15 @@ export default async function GestaoPage() {
                 </CardBody>
               </Card>
             </Link>
+            <Link href="/gestao/calculadora">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardBody>
+                  <p className="text-[24px] mb-sm">🧮</p>
+                  <p className="text-body-sm font-medium text-ag-primary">Calculadora</p>
+                  <p className="caption text-ag-muted mt-xs">Calcular custo/km</p>
+                </CardBody>
+              </Card>
+            </Link>
           </div>
         )}
       </main>

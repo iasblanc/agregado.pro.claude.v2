@@ -1,5 +1,7 @@
 'use client'
 
+import { NotificationBell } from './NotificationBell'
+
 import { useTransition } from 'react'
 import { logoutAction }  from '@/app/(auth)/login/actions'
 import { useUser }       from '@/hooks/useUser'
@@ -69,6 +71,9 @@ export function Header({ title, subtitle }: HeaderProps) {
           </div>
         )}
       </div>
-    </header>
+      <div className="flex items-center gap-sm shrink-0">
+          <NotificationBell />
+        </div>
+      </header>
   )
 }
