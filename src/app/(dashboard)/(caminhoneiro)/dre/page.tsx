@@ -66,7 +66,16 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="DRE" subtitle={`Demonstrativo — ${formatPeriod(period)}`} />
+      <div className="flex items-center justify-between px-lg py-md bg-ag-bg border-b border-ag-border md:px-xl">
+        <div>
+          <p className="overline">Demonstrativo de Resultado</p>
+          <h1 className="font-display text-display-sm font-medium text-ag-primary">DRE — {formatPeriod(period)}</h1>
+        </div>
+        <a href={`/api/dre/export?period=${period}`} download
+          className="flex items-center gap-sm px-md py-sm rounded-pill text-body-sm font-medium border border-ag-border text-ag-secondary hover:text-ag-primary transition-colors">
+          ⬇ Exportar
+        </a>
+      </div>
 
       <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto">
 

@@ -9,7 +9,8 @@ type NavItem = { href: string; label: string; icon: string }
 const CAMINHONEIRO: NavItem[] = [
   { href: '/gestao',              label: 'Gestão',  icon: '📊' },
   { href: '/dre',                 label: 'DRE',     icon: '📈' },
-  { href: '/contratos',           label: 'Vagas',   icon: '📋' },
+  { href: '/contratos',    label: 'Vagas',        icon: '📋' },
+  { href: '/candidaturas', label: 'Candidaturas', icon: '📬' },
   { href: '/gestao/calculadora',  label: 'Calcular', icon: '🧮' },
   { href: '/score',               label: 'Score',   icon: '🎯' },
 ]

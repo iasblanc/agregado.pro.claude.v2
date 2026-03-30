@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from 'next'
 import { redirect }      from 'next/navigation'
 import { getServerUser, createAdminClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 import { Header }        from '@/components/layout/Header'
 import { Card, CardBody } from '@/components/ui/card'
 import { formatBRL, getCurrentPeriod }      from '@/lib/utils'
@@ -24,13 +25,22 @@ function calcViability(contractValue: number, routeKm: number, userCostPerKm: nu
   return               { label: '❌ Abaixo do custo', color: '#DC2626', bg: '#FEE2E2', margin }
 }
 
-export default async function ContratosPage() {
+export default async function ContratosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tipo?: string; min?: string; max?: string }>
+}) {
   const user = await getServerUser()
   if (!user) return null
   const admin = createAdminClient()
 
   const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
   if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
+
+  const params    = await searchParams
+  const tipoFiltro = params.tipo ?? ''
+  const minValor   = params.min ? Number(params.min) : null
+  const maxValor   = params.max ? Number(params.max) : null
 
   // Buscar custo/km real do usuário (últimos 3 meses)
   const period = getCurrentPeriod()
@@ -69,7 +79,15 @@ export default async function ContratosPage() {
   const allContracts = contracts ?? []
 
   // Adicionar viabilidade e ordenar
-  const withViability = allContracts.map(c => ({
+  // Aplicar filtros
+  const contractsFiltrados = allContracts.filter(c => {
+    if (tipoFiltro && c.vehicle_type !== tipoFiltro) return false
+    if (minValor && Number(c.contract_value) < minValor) return false
+    if (maxValor && Number(c.contract_value) > maxValor) return false
+    return true
+  })
+
+  const withViability = contractsFiltrados.map(c => ({
     ...c,
     viability: calcViability(Number(c.contract_value), Number(c.route_km), userCostPerKm),
     myStatus: myCandidaturesByContract[c.id] ?? null,
@@ -82,7 +100,7 @@ export default async function ContratosPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Contratos" subtitle={`${allContracts.length} vagas disponíveis`} />
+      <Header title="Contratos" subtitle={`${contractsFiltrados.length} de ${allContracts.length} vagas`} />
       <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto">
 
         {/* Banner custo/km */}
@@ -97,6 +115,29 @@ export default async function ContratosPage() {
             ⚠ Lance custos no DRE para ver a viabilidade real de cada contrato
           </div>
         )}
+
+
+        {/* Filtros por tipo de veículo */}
+        <div className="flex gap-sm overflow-x-auto pb-xs">
+          {[
+            ['', 'Todos'],
+            ['Truck', 'Truck'],
+            ['Toco', 'Toco'],
+            ['Cavalo 6x2', 'Cavalo 6x2'],
+            ['Cavalo 6x4', 'Cavalo 6x4'],
+          ].map(([tipo, label]) => (
+            <Link key={tipo} href={tipo ? `/contratos?tipo=${encodeURIComponent(tipo)}` : '/contratos'}>
+              <span className="px-md py-sm rounded-pill text-body-sm font-medium border transition-all whitespace-nowrap cursor-pointer"
+                style={{
+                  background:  tipoFiltro === tipo ? 'var(--color-accent)' : 'transparent',
+                  borderColor: tipoFiltro === tipo ? 'var(--color-accent)' : 'var(--color-border)',
+                  color:       tipoFiltro === tipo ? 'var(--color-cta-text)' : 'var(--color-text-secondary)',
+                }}>
+                {label}
+              </span>
+            </Link>
+          ))}
+        </div>
 
         {/* Lista */}
         {withViability.length === 0 ? (

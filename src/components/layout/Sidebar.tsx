@@ -20,7 +20,8 @@ type NavItem = {
 const CAMINHONEIRO_NAV: NavItem[] = [
   { href: '/gestao',     label: 'Gestão',     icon: '📊', phase: 1 },
   { href: '/dre',        label: 'DRE',        icon: '📈', phase: 1 },
-  { href: '/contratos',  label: 'Contratos',  icon: '📋', phase: 2 },
+  { href: '/contratos',    label: 'Contratos',    icon: '📋', phase: 2 },
+  { href: '/candidaturas', label: 'Candidaturas', icon: '📬', phase: 2 },
   { href: '/banco',      label: 'Banco',      icon: '💳', phase: 2 },
   { href: '/score',      label: 'Score',      icon: '🎯', phase: 3 },
   { href: '/credito',    label: 'Crédito',    icon: '💰', phase: 4 },

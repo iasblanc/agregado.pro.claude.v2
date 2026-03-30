@@ -155,6 +155,43 @@ export default async function GestaoPage() {
           </Card>
         )}
 
+        {/* Checklist de onboarding */}
+        {!hasData && (() => {
+          const hasVehicle = vehicles && vehicles.length > 0
+          const steps = [
+            { label: 'Cadastrar meu caminhão',    href: '/gestao/veiculos',    done: hasVehicle },
+            { label: 'Registrar primeira receita', href: '/gestao/lancamento?type=receita',  done: false },
+            { label: 'Registrar custos do mês',    href: '/gestao/lancamento?type=custo_fixo', done: false },
+            { label: 'Ver meu DRE completo',       href: '/dre', done: false },
+          ]
+          const done = steps.filter(s => s.done).length
+          return (
+            <Card>
+              <CardHeader label={`Primeiros passos (${done}/${steps.length})`} />
+              <CardBody>
+                <div className="h-1.5 rounded-full mb-lg overflow-hidden" style={{ background: 'var(--color-surface)' }}>
+                  <div className="h-full rounded-full transition-all" style={{ width: `${(done / steps.length) * 100}%`, background: 'var(--color-success)' }} />
+                </div>
+                <div className="space-y-sm">
+                  {steps.map((step, i) => (
+                    <a key={i} href={step.href} className="flex items-center gap-md py-sm border-b border-ag-border last:border-0 group">
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] shrink-0"
+                        style={{ background: step.done ? 'var(--color-success)' : 'var(--color-surface)', color: step.done ? '#fff' : 'var(--color-text-muted)' }}>
+                        {step.done ? '✓' : i + 1}
+                      </span>
+                      <span className="text-body-sm text-ag-primary group-hover:underline flex-1"
+                        style={{ textDecoration: step.done ? 'line-through' : 'none', opacity: step.done ? 0.5 : 1 }}>
+                        {step.label}
+                      </span>
+                      {!step.done && <span className="caption text-ag-muted shrink-0">→</span>}
+                    </a>
+                  ))}
+                </div>
+              </CardBody>
+            </Card>
+          )
+        })()}
+
         {/* Primeiros passos — sem dados */}
         {!hasData && (
           <Card>
