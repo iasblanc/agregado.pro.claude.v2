@@ -6,6 +6,7 @@ import { Header }   from '@/components/layout/Header'
 import { Card, CardHeader, CardBody } from '@/components/ui/card'
 import { formatBRL, getCurrentPeriod } from '@/lib/utils'
 import { CandidatarButton } from '../CandidatarButton'
+import { AvaliacaoButton }   from '../AvaliacaoButton'
 
 export default async function ContratoDetalheAGPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getServerUser()
@@ -39,7 +40,7 @@ export default async function ContratoDetalheAGPage({ params }: { params: Promis
 
   // Minha candidatura
   const { data: myCand } = await admin.from('candidatures')
-    .select('status').eq('contract_id', id).eq('candidate_id', profile.id).not('status', 'eq', 'cancelada').maybeSingle()
+    .select('id, status').eq('contract_id', id).eq('candidate_id', profile.id).not('status', 'eq', 'cancelada').maybeSingle()
 
   // Viabilidade
   let viability = null
@@ -49,6 +50,9 @@ export default async function ContratoDetalheAGPage({ params }: { params: Promis
     const margin         = (profit / Number(contract.contract_value)) * 100
     viability = { estimatedCost, profit, margin }
   }
+
+  // Publisher para avaliação bidirecional
+  const { data: publisherProfile } = await admin.from('profiles').select('id').eq('id', contract.publisher_id).single()
 
   return (
     <div className="flex flex-col h-full">
@@ -131,6 +135,14 @@ export default async function ContratoDetalheAGPage({ params }: { params: Promis
           ) : (
             <CandidatarButton contractId={contract.id} profileId={profile.id} />
           )}
+        {/* Avaliação — disponível quando contrato aceito */}
+        {myCand?.status === 'aceita' && myCand?.id && (
+          <AvaliacaoButton
+            contractId={contract.id}
+            candidatureId={myCand.id}
+            evaluatedId={contract.publisher_id}
+          />
+        )}
         </div>
       </main>
     </div>

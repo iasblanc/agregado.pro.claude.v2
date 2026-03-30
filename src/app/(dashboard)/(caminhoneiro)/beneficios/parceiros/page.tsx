@@ -1,199 +1,98 @@
+export const dynamic = 'force-dynamic'
+
 import type { Metadata } from 'next'
-import { redirect }       from 'next/navigation'
-import Link               from 'next/link'
-import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
-import { Header }         from '@/components/layout/Header'
-import { Badge }          from '@/components/ui/badge'
-import { TIER_CONFIG, type LoyaltyTier } from '@/services/loyalty/engine'
+import Link              from 'next/link'
+import { redirect }      from 'next/navigation'
+import { getServerUser, createAdminClient } from '@/lib/supabase/server'
+import { Header }        from '@/components/layout/Header'
+import { Card, CardBody } from '@/components/ui/card'
+import { Button }        from '@/components/ui/button'
 
 export const metadata: Metadata = { title: 'Parceiros' }
-export const dynamic = 'force-dynamic'  // 1 hora
+
+const CATEGORIAS = [
+  {
+    categoria: '⛽ Combustível',
+    parceiros: [
+      { nome: 'Rede BR', desc: 'Postos BR parceiros', beneficio: '5% desconto no abastecimento', disponivel: true },
+      { nome: 'Shell Select', desc: 'Postos Shell parceiros', beneficio: '4% cashback em pontos', disponivel: true },
+    ],
+  },
+  {
+    categoria: '🔧 Manutenção',
+    parceiros: [
+      { nome: 'Bosch Car Service', desc: 'Rede oficial de oficinas', beneficio: '10% mão de obra', disponivel: true },
+      { nome: 'Borracharia Express', desc: 'Borracharias credenciadas', beneficio: 'Atendimento preferencial', disponivel: true },
+    ],
+  },
+  {
+    categoria: '🍽️ Alimentação & Descanso',
+    parceiros: [
+      { nome: 'Restaurantes de Estrada', desc: 'Rede de parceiros na BR', beneficio: '8% desconto nas refeições', disponivel: true },
+      { nome: 'Áreas de Descanso', desc: 'Postos com estrutura para caminhoneiros', beneficio: 'Estacionamento gratuito', disponivel: true },
+    ],
+  },
+  {
+    categoria: '🛡️ Seguros & Proteção',
+    parceiros: [
+      { nome: 'Porto Seguro Caminhão', desc: 'Seguro de carga e veículo', beneficio: 'Condições exclusivas para agregados', disponivel: false },
+      { nome: 'Assistência 24h', desc: 'Guincho e socorro mecânico', beneficio: 'Cobertura nacional', disponivel: false },
+    ],
+  },
+]
 
 export default async function ParceirosPage() {
-  const supabase = await createClient()
   const user = await getServerUser()
-  if (!user) return null  // layout já redireciona
+  if (!user) return null
   const admin = createAdminClient()
 
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('id, role')
-    .eq('user_id', user.id)
-    .single()
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-  if (!profile || profile.role !== 'caminhoneiro') redirect('/gestao')
-
-  // Buscar tier do usuário
-  const { data: loyaltyAccount } = await supabase
-    .from('loyalty_accounts')
-    .select('tier')
-    .eq('owner_id', profile.id)
-    .maybeSingle()
-
-  const userTier = (loyaltyAccount?.tier as LoyaltyTier) ?? 'bronze'
-
-  // Buscar parceiros ativos
-  const { data: partners } = await supabase
-    .from('partner_integrations')
-    .select('*')
-    .eq('is_active', true)
-    .order('priority', { ascending: false })
-
-  const TIER_ORDER: LoyaltyTier[] = ['bronze', 'prata', 'ouro', 'platina']
-  const userTierIdx = TIER_ORDER.indexOf(userTier)
-
-  const CATEGORY_LABELS: Record<string, { label: string; icon: string }> = {
-    combustivel: { label: 'Combustível', icon: '⛽' },
-    manutencao:  { label: 'Manutenção',  icon: '🔧' },
-    seguro:      { label: 'Seguros',     icon: '🛡️' },
-    pneus:       { label: 'Pneus',       icon: '🛞' },
-    alimentacao: { label: 'Alimentação', icon: '🍽️' },
-  }
-
-  // Agrupar por categoria
-  const grouped = (partners ?? []).reduce((acc: Record<string, any[]>, p) => {
-    if (!acc[p.category]) acc[p.category] = []
-    acc[p.category]!.push(p)
-    return acc
-  }, {})
+  const { data: loyalty } = await admin.from('loyalty_accounts')
+    .select('tier').eq('owner_id', profile.id).maybeSingle()
+  const tier = loyalty?.tier ?? 'bronze'
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Parceiros" subtitle="Descontos e benefícios na estrada" />
+      <Header title="Parceiros" subtitle="Rede de vantagens exclusivas" />
+      <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto max-w-2xl">
 
-      <main className="flex-1 px-lg py-xl md:px-xl space-y-xl">
-        {/* Tier atual */}
-        <div
-          className="flex items-center gap-md px-md py-sm rounded-lg text-body-sm"
-          style={{
-            background: TIER_CONFIG[userTier].bgColor,
-            border:     `1px solid ${TIER_CONFIG[userTier].borderColor}`,
-            color:       TIER_CONFIG[userTier].color,
-          }}
-        >
-          <span className="text-[20px]" aria-hidden="true">{TIER_CONFIG[userTier].icon}</span>
-          <span>
-            Você é <strong>{TIER_CONFIG[userTier].label}</strong> — acessa todos os benefícios até este nível.
-          </span>
-          <Link href="/beneficios" className="ml-auto underline underline-offset-2 text-body-sm shrink-0">
-            Ver pontos →
+        <div className="flex items-center justify-between">
+          <p className="text-body-sm text-ag-secondary">
+            Seu nível: <strong className="text-ag-primary capitalize">{tier}</strong>
+          </p>
+          <Link href="/beneficios">
+            <Button size="sm" variant="secondary">← Benefícios</Button>
           </Link>
         </div>
 
-        {/* Parceiros por categoria */}
-        {Object.entries(grouped).map(([category, categoryPartners]) => {
-          const catConfig = CATEGORY_LABELS[category]
-          if (!catConfig) return null
-
-          return (
-            <section key={category}>
-              <div className="flex items-center gap-sm mb-lg">
-                <span className="text-[20px]" aria-hidden="true">{catConfig.icon}</span>
-                <h2 className="font-display text-display-sm font-medium text-ag-primary">
-                  {catConfig.label}
-                </h2>
-                <Badge variant="muted">{categoryPartners.length}</Badge>
-              </div>
-
-              <div className="grid gap-md sm:grid-cols-2 lg:grid-cols-3">
-                {(categoryPartners as any[]).map((partner) => {
-                  const minTierIdx = TIER_ORDER.indexOf(partner.min_tier_required as LoyaltyTier)
-                  const isAvailable = userTierIdx >= minTierIdx
-                  const tierCfg     = TIER_CONFIG[partner.min_tier_required as LoyaltyTier]
-
-                  const discountDisplay =
-                    partner.discount_type === 'percentual'
-                      ? `${(partner.discount_value * 100).toFixed(0)}% off`
-                      : partner.discount_type === 'cashback'
-                      ? `${(partner.discount_value * 100).toFixed(0)}% cashback`
-                      : `R$ ${Number(partner.discount_value).toFixed(0)} off`
-
-                  return (
-                    <div
-                      key={partner.id}
-                      className={[
-                        'bg-ag-surface border rounded-xl p-lg space-y-md transition-all',
-                        isAvailable
-                          ? 'border-ag-border hover:shadow-md hover:border-ag-accent'
-                          : 'border-ag-border opacity-55',
-                      ].join(' ')}
-                    >
-                      {/* Header */}
-                      <div className="flex items-start justify-between gap-sm">
-                        <div className="min-w-0">
-                          <p className="text-body font-medium text-ag-primary truncate">
-                            {partner.name}
-                          </p>
-                          <p
-                            className="text-[18px] font-bold mt-xs"
-                            style={{ color: isAvailable ? 'var(--color-success)' : 'var(--color-text-muted)' }}
-                          >
-                            {discountDisplay}
-                          </p>
-                        </div>
-                        {!isAvailable && (
-                          <Badge variant="muted">
-                            {tierCfg.icon} {tierCfg.label}+
-                          </Badge>
+        {CATEGORIAS.map(cat => (
+          <Card key={cat.categoria}>
+            <CardBody>
+              <p className="text-body-sm font-medium text-ag-primary mb-md">{cat.categoria}</p>
+              <div className="space-y-md">
+                {cat.parceiros.map(p => (
+                  <div key={p.nome} className={`flex items-center gap-md py-sm border-b border-ag-border last:border-0 ${!p.disponivel ? 'opacity-40' : ''}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-sm mb-xs">
+                        <p className="text-body-sm font-medium text-ag-primary">{p.nome}</p>
+                        {!p.disponivel && (
+                          <span className="caption text-ag-muted border border-ag-border px-sm py-xs rounded-md">Em breve</span>
                         )}
                       </div>
-
-                      {/* Descrição */}
-                      <p className="text-body-sm text-ag-secondary">{partner.description}</p>
-
-                      {/* Cobertura */}
-                      <div className="flex items-center gap-sm flex-wrap">
-                        <Badge variant={isAvailable ? 'success' : 'muted'} dot>
-                          {partner.is_nationwide ? 'Nacional' : partner.states_covered?.join(', ')}
-                        </Badge>
-                        <Badge variant="muted">
-                          {partner.integration_type === 'desconto_codigo' ? '🎟️ Código' :
-                           partner.integration_type === 'cashback'        ? '💸 Cashback' :
-                           '🔗 API direta'}
-                        </Badge>
-                      </div>
-
-                      {/* CTA */}
-                      {isAvailable ? (
-                        <Link href="/beneficios">
-                          <button
-                            className="w-full text-center py-sm rounded-md text-body-sm font-medium transition-colors"
-                            style={{ background: 'var(--color-overlay)', color: 'var(--color-text-secondary)' }}
-                          >
-                            Resgatar via pontos →
-                          </button>
-                        </Link>
-                      ) : (
-                        <p className="text-center caption text-ag-muted">
-                          Upgrade para {tierCfg.label} para acessar
-                        </p>
-                      )}
+                      <p className="caption text-ag-muted">{p.desc}</p>
                     </div>
-                  )
-                })}
+                    <span className="text-body-sm font-medium shrink-0 text-right max-w-[120px]"
+                      style={{ color: p.disponivel ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
+                      {p.beneficio}
+                    </span>
+                  </div>
+                ))}
               </div>
-            </section>
-          )
-        })}
-
-        {/* CTA para parceiros */}
-        <section
-          className="rounded-xl p-lg space-y-sm text-center"
-          style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-        >
-          <p className="text-body-sm font-medium text-ag-primary">
-            🤝 Quer ser um parceiro Agregado.Pro?
-          </p>
-          <p className="text-body-sm text-ag-secondary">
-            Alcance caminhoneiros agregados em todo o Brasil com descontos exclusivos na plataforma.
-          </p>
-          <a
-            href="mailto:parceiros@agregado.pro"
-            className="inline-flex text-body-sm font-medium underline underline-offset-2 text-ag-secondary hover:text-ag-primary transition-colors"
-          >
-            parceiros@agregado.pro
-          </a>
-        </section>
+            </CardBody>
+          </Card>
+        ))}
       </main>
     </div>
   )

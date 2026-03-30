@@ -8,6 +8,7 @@ import { Header }            from '@/components/layout/Header'
 import { Card, CardHeader, CardBody } from '@/components/ui/card'
 import { Button }            from '@/components/ui/button'
 import { DreDeleteButton }   from './DreDeleteButton'
+import { DreChart }          from './DreChart'
 import { formatBRL, getCurrentPeriod, formatPeriod, getLastPeriods } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'DRE' }
@@ -52,12 +53,10 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
   const period    = params.period ?? getCurrentPeriod()
   const periods   = getLastPeriods(12)
 
-  const { data: entries } = await admin
-    .from('dre_entries')
-    .select('*')
-    .eq('owner_id', profile.id)
-    .eq('period', period)
-    .order('created_at', { ascending: false })
+  const [{ data: entries }, { data: allEntries }] = await Promise.all([
+    admin.from('dre_entries').select('*').eq('owner_id', profile.id).eq('period', period).order('created_at', { ascending: false }),
+    admin.from('dre_entries').select('period, entry_type, amount').eq('owner_id', profile.id).order('period', { ascending: false }).limit(300),
+  ])
 
   const allEntries = (entries ?? []) as DreEntry[]
   const dre = calcDRE(allEntries)
@@ -112,6 +111,28 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
             </Card>
           ))}
         </div>
+
+
+        {/* Gráfico de evolução */}
+        {(() => {
+          const byP: Record<string, { receita: number; custo: number }> = {}
+          for (const e of (allEntries ?? [])) {
+            if (!byP[e.period]) byP[e.period] = { receita: 0, custo: 0 }
+            if (e.entry_type === 'receita') byP[e.period].receita += Number(e.amount)
+            else byP[e.period].custo += Number(e.amount)
+          }
+          const chartData = Object.entries(byP)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .slice(-6)
+            .map(([p, v]) => ({ period: p, label: p, receita: v.receita, custo: v.custo, resultado: v.receita - v.custo }))
+          if (chartData.length < 2) return null
+          return (
+            <Card>
+              <CardHeader label={`Evolução ${chartData.length} meses`} />
+              <CardBody><DreChart data={chartData} /></CardBody>
+            </Card>
+          )
+        })()}
 
         {/* Botão novo lançamento */}
         <Link href={`/gestao/lancamento?period=${period}`}>
