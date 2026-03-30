@@ -30,6 +30,32 @@ const ENTRY_ICONS: Record<string, string> = {
   receita: '💵', custo_fixo: '📌', custo_variavel: '🔄', pessoal: '👤',
 }
 
+const MONTHS_PT2 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+function formatMonth(p: string) {
+  const [,m] = p.split('-').map(Number)
+  return MONTHS_PT2[m-1] ?? ''
+}
+function MiniSparkline({ data }: { data: { resultado: number }[] }) {
+  if (data.length < 2) return null
+  const W = 80, H = 28
+  const vals = data.map(d => d.resultado)
+  const min = Math.min(...vals, 0); const max = Math.max(...vals, 1)
+  const range = max - min || 1
+  const pts = vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * W
+    const y = H - ((v - min) / range) * H
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+  const lastPositive = vals[vals.length - 1] >= 0
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: W, height: H }}>
+      <polyline points={pts} fill="none"
+        stroke={lastPositive ? 'var(--color-success)' : 'var(--color-danger)'}
+        strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default async function GestaoPage({
   searchParams,
 }: {
@@ -48,7 +74,7 @@ export default async function GestaoPage({
   const periodLabel = formatPeriod(period)
 
   // Buscar lançamentos do mês atual e anterior
-  const [{ data: entries }, { data: entriesAnterior }, { data: vehicles }, { data: recentEntries }] = await Promise.all([
+  const [{ data: entries }, { data: entriesAnterior }, { data: vehicles }, { data: recentEntries }, { data: histAll }] = await Promise.all([
     admin.from('dre_entries').select('*').eq('owner_id', profile.id).eq('period', period),
     prevPeriod
       ? admin.from('dre_entries').select('*').eq('owner_id', profile.id).eq('period', prevPeriod)
@@ -56,6 +82,8 @@ export default async function GestaoPage({
     admin.from('vehicles').select('id, brand, model, plate').eq('owner_id', profile.id).eq('is_active', true),
     admin.from('dre_entries').select('id, entry_type, category, description, amount, created_at')
       .eq('owner_id', profile.id).order('created_at', { ascending: false }).limit(5),
+    admin.from('dre_entries').select('period, entry_type, amount')
+      .eq('owner_id', profile.id).order('period', { ascending: false }).limit(200),
   ])
 
   const dre     = calcDRE(entries ?? [])

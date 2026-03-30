@@ -133,7 +133,7 @@ export default async function ContratoDetalheAGPage({ params }: { params: Promis
               ✓ Sua candidatura está <strong>{myCand.status}</strong>
             </div>
           ) : (
-            <CandidatarButton contractId={contract.id} profileId={profile.id} />
+            <CandidatarButton contractId={contract.id} profileId={profile.id} custoKmReal={custoKmReal} />
           )}
         {/* Avaliação — disponível quando contrato aceito */}
         {myCand?.status === 'aceita' && myCand?.id && (

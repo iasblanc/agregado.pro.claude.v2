@@ -35,30 +35,41 @@ function ScoreGauge({ score }: { score: number }) {
     score >= 500 ? '#7C3AED' : score >= 350 ? '#D97706' : '#DC2626'
 
   return (
-    <svg viewBox="0 0 180 120" className="w-full max-w-[200px] mx-auto">
-      {/* Track */}
-      <circle cx={cx} cy={cy} r={radius} fill="none"
-        stroke="var(--color-surface)" strokeWidth={strokeW}
-        strokeDasharray={`${dashArr} ${circ}`}
-        strokeDashoffset={0}
-        strokeLinecap="round"
-        transform={`rotate(${startAngle} ${cx} ${cy})`} />
-      {/* Progress */}
-      <circle cx={cx} cy={cy} r={radius} fill="none"
+    <svg viewBox="0 0 200 130" className="w-full max-w-[240px] mx-auto">
+      {/* Faixa ruim */}
+      <circle cx={cx+10} cy={cy+10} r={radius} fill="none"
+        stroke="#FCA5A5" strokeWidth={strokeW - 2}
+        strokeDasharray={`${dashArr * 0.35} ${circ}`}
+        strokeDashoffset={0} strokeLinecap="butt"
+        transform={`rotate(${startAngle} ${cx+10} ${cy+10})`} />
+      {/* Faixa ok */}
+      <circle cx={cx+10} cy={cy+10} r={radius} fill="none"
+        stroke="#FDE68A" strokeWidth={strokeW - 2}
+        strokeDasharray={`${dashArr * 0.3} ${circ}`}
+        strokeDashoffset={-(dashArr * 0.35)} strokeLinecap="butt"
+        transform={`rotate(${startAngle} ${cx+10} ${cy+10})`} />
+      {/* Faixa bom */}
+      <circle cx={cx+10} cy={cy+10} r={radius} fill="none"
+        stroke="#6EE7B7" strokeWidth={strokeW - 2}
+        strokeDasharray={`${dashArr * 0.35} ${circ}`}
+        strokeDashoffset={-(dashArr * 0.65)} strokeLinecap="butt"
+        transform={`rotate(${startAngle} ${cx+10} ${cy+10})`} />
+      {/* Progress overlay */}
+      <circle cx={cx+10} cy={cy+10} r={radius} fill="none"
         stroke={color} strokeWidth={strokeW}
         strokeDasharray={`${dashArr} ${circ}`}
         strokeDashoffset={dashOff}
         strokeLinecap="round"
-        transform={`rotate(${startAngle} ${cx} ${cy})`}
-        style={{ transition: 'stroke-dashoffset 1s ease' }} />
+        transform={`rotate(${startAngle} ${cx+10} ${cy+10})`}
+        style={{ transition: 'stroke-dashoffset 1.2s ease-out', opacity: 0.9 }} />
       {/* Score text */}
-      <text x={cx} y={cy - 5} textAnchor="middle"
-        fontFamily="var(--font-display, serif)" fontSize="28" fontWeight="600" fill={color}>
+      <text x={cx+10} y={cy+5} textAnchor="middle"
+        fontFamily="var(--font-display, serif)" fontSize="32" fontWeight="600" fill={color}>
         {score}
       </text>
-      <text x={cx} y={cy + 14} textAnchor="middle"
+      <text x={cx+10} y={cy+20} textAnchor="middle"
         fontFamily="var(--font-body, sans-serif)" fontSize="11" fill="var(--color-text-muted)">
-        de 1000
+        de 1000 pontos
       </text>
     </svg>
   )
