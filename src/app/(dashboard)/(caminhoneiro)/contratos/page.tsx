@@ -8,6 +8,7 @@ import { Header }        from '@/components/layout/Header'
 import { Card, CardBody } from '@/components/ui/card'
 import { formatBRL, getCurrentPeriod }      from '@/lib/utils'
 import { CandidatarButton }  from './CandidatarButton'
+import { ContratoSearch }    from './ContratoSearch'
 
 export const metadata: Metadata = { title: 'Contratos Disponíveis' }
 
@@ -28,7 +29,7 @@ function calcViability(contractValue: number, routeKm: number, userCostPerKm: nu
 export default async function ContratosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tipo?: string; min?: string; max?: string }>
+  searchParams: Promise<{ tipo?: string; min?: string; max?: string; q?: string }>
 }) {
   const user = await getServerUser()
   if (!user) return null
@@ -38,9 +39,10 @@ export default async function ContratosPage({
   if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
   const params    = await searchParams
-  const tipoFiltro = params.tipo ?? ''
-  const minValor   = params.min ? Number(params.min) : null
-  const maxValor   = params.max ? Number(params.max) : null
+  const tipoFiltro   = params.tipo ?? ''
+  const minValor     = params.min ? Number(params.min) : null
+  const maxValor     = params.max ? Number(params.max) : null
+  const searchQuery  = (params.q ?? '').toLowerCase()
 
   // Buscar custo/km real do usuário (últimos 3 meses)
   const period = getCurrentPeriod()
@@ -84,6 +86,10 @@ export default async function ContratosPage({
     if (tipoFiltro && c.vehicle_type !== tipoFiltro) return false
     if (minValor && Number(c.contract_value) < minValor) return false
     if (maxValor && Number(c.contract_value) > maxValor) return false
+    if (searchQuery) {
+      const searchable = [c.title, c.route_origin, c.route_destination, c.vehicle_type].join(' ').toLowerCase()
+      if (!searchable.includes(searchQuery)) return false
+    }
     return true
   })
 
@@ -116,6 +122,9 @@ export default async function ContratosPage({
           </div>
         )}
 
+
+        {/* Busca client-side */}
+        <ContratoSearch currentQuery={searchQuery} currentTipo={tipoFiltro} />
 
         {/* Filtros por tipo de veículo */}
         <div className="flex gap-sm overflow-x-auto pb-xs">
