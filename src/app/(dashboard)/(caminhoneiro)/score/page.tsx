@@ -72,9 +72,12 @@ export default async function ScorePage() {
   const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
   if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-  // Score atual
-  const { data: scoreRecord } = await admin.from('credit_scores')
-    .select('*').eq('owner_id', profile.id).eq('is_current', true).maybeSingle()
+  // Score atual e histórico
+  const [{ data: scoreRecord }, { data: scoreHistory }] = await Promise.all([
+    admin.from('credit_scores').select('*').eq('owner_id', profile.id).eq('is_current', true).maybeSingle(),
+    admin.from('credit_scores').select('score, tier, calculated_at').eq('owner_id', profile.id)
+      .order('calculated_at', { ascending: false }).limit(5),
+  ])
 
   // Histórico de lançamentos para verificar se tem dados
   const { count: dreCount } = await admin.from('dre_entries')
@@ -188,6 +191,28 @@ export default async function ScorePage() {
                   <p className="caption text-ag-muted mt-xs">Baseado na sua receita média mensal</p>
                 </div>
                 <span className="text-[32px]">✅</span>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Histórico de scores */}
+        {scoreHistory && scoreHistory.length > 1 && (
+          <Card>
+            <CardHeader label="Histórico" />
+            <CardBody>
+              <div className="flex items-end gap-sm justify-between" style={{ height: 60 }}>
+                {scoreHistory.slice().reverse().map((s, i) => {
+                  const pct = (s.score / 1000) * 100
+                  const color = s.score >= 650 ? 'var(--color-success)' : s.score >= 350 ? 'var(--color-warning)' : 'var(--color-danger)'
+                  const isLast = i === scoreHistory.length - 1
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-xs">
+                      <span className="caption text-ag-muted" style={{ fontSize: 10 }}>{s.score}</span>
+                      <div className="w-full rounded-sm" style={{ height: `${Math.max(pct * 0.5, 4)}px`, background: color, opacity: isLast ? 1 : 0.4 }} />
+                    </div>
+                  )
+                })}
               </div>
             </CardBody>
           </Card>

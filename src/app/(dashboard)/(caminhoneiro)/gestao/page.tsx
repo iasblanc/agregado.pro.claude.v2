@@ -8,6 +8,7 @@ import { Header }        from '@/components/layout/Header'
 import { Card, CardHeader, CardBody } from '@/components/ui/card'
 import { Button }        from '@/components/ui/button'
 import { formatBRL, getCurrentPeriod, formatPeriod, getLastPeriods } from '@/lib/utils'
+import { LancamentoRapido } from './LancamentoRapido'
 
 export const metadata: Metadata = { title: 'Gestão' }
 
@@ -218,6 +219,16 @@ export default async function GestaoPage() {
               </Link>
             </CardBody>
           </Card>
+        )}
+
+        {/* Lançamento rápido — inline */}
+        {hasData && (
+          <div className="rounded-xl border border-ag-border p-lg" style={{ background: 'var(--color-bg)' }}>
+            <LancamentoRapido
+              period={period}
+              vehicleId={vehicles && vehicles.length > 0 ? vehicles[0].id : undefined}
+            />
+          </div>
         )}
 
         {/* Ações rápidas */}

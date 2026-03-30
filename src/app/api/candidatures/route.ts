@@ -58,8 +58,9 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // Incrementar contador de candidatos no contrato
-  await admin.rpc('increment_candidates_count', { contract_id: parsed.data.contract_id })
-    .catch(() => null) // não bloquear se RPC não existir
+  try {
+    await admin.rpc('increment_candidates_count', { contract_id: parsed.data.contract_id })
+  } catch { /* silencioso */ }
 
   return NextResponse.json({ data }, { status: 201 })
 }

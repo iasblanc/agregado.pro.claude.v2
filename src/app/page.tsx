@@ -101,8 +101,41 @@ function LandingPage() {
         </div>
       </section>
 
-      <hr className="divider" />
 
+      {/* COMO FUNCIONA */}
+      <section className="section">
+        <p className="overline" style={{ marginBottom: 16 }}>Em 3 minutos</p>
+        <h2 className="display" style={{ fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: 500, lineHeight: 1.2, marginBottom: 48 }}>
+          Descubra se seu caminhão está<br />dando lucro agora mesmo.
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24, position: 'relative' }}>
+          {[
+            { step: '1', icon: '📋', title: 'Crie sua conta grátis', desc: 'Cadastro em 2 minutos. Sem cartão de crédito. Sem burocracia.' },
+            { step: '2', icon: '💵', title: 'Lance receitas e custos', desc: 'Diesel, pedágio, parcela, manutenção — qualquer lançamento do mês.' },
+            { step: '3', icon: '📊', title: 'Veja o resultado real', desc: 'DRE automático com custo por km, margem operacional e resultado do mês.' },
+            { step: '4', icon: '🎯', title: 'Tome decisões com dados', desc: 'Aceite apenas contratos que cobrem seu custo real. Negocie com segurança.' },
+          ].map((s, i) => (
+            <div key={s.step} style={{ position: 'relative' }}>
+              {i < 3 && (
+                <div style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 1, background: 'var(--color-border)', display: 'none' }} className="md-arrow" />
+              )}
+              <div className="card-surface" style={{ height: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <span style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 400, color: 'var(--color-border)', lineHeight: 1 }}>{s.step}</span>
+                  <span style={{ fontSize: 28 }}>{s.icon}</span>
+                </div>
+                <p style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>{s.title}</p>
+                <p style={{ fontSize: 14, color: '#5C5850', lineHeight: 1.6 }}>{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 48 }}>
+          <Link href="/cadastro" className="cta-btn">Começar agora — é grátis</Link>
+        </div>
+      </section>
+
+      <hr className="divider" />
       {/* MÉTRICAS DO MERCADO */}
       <section className="section">
         <p className="overline" style={{ textAlign: 'center', marginBottom: 48 }}>O mercado que a plataforma serve</p>

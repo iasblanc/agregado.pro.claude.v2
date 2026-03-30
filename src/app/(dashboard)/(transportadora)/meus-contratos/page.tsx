@@ -10,6 +10,7 @@ import { Button }         from '@/components/ui/button'
 import { formatBRL, formatDate } from '@/lib/utils'
 import { PublicarContratoButton } from './PublicarContratoButton'
 import { NovoContratoForm }       from './NovoContratoForm'
+import { RelatorioTR }         from './RelatorioTR'
 
 export const metadata: Metadata = { title: 'Meus Contratos' }
 
@@ -91,8 +92,15 @@ export default async function MeusContratosPage({
     return acc
   }, {} as Record<string, number>)
 
-  const totalPending = (pending ?? []).length
+  const totalPending   = (pending ?? []).length
   const filtered = filter === 'todos' ? allContracts : allContracts.filter(c => c.status === filter)
+
+  // Dados para relatório
+  const { data: allCandidatures } = contractIds.length > 0
+    ? await admin.from('candidatures').select('id, status').in('contract_id', contractIds)
+    : { data: [] }
+  const totalCandidatures  = (allCandidatures ?? []).length
+  const acceptedCandidatures = (allCandidatures ?? []).filter(c => c.status === 'aceita' || c.status === 'confirmada').length
   const empresa  = profile.company_name || profile.full_name
 
   // Stats financeiras
@@ -123,6 +131,18 @@ export default async function MeusContratosPage({
             </Card>
           ))}
         </div>
+
+        {/* Relatório de performance */}
+        {allContracts.length > 0 && (
+          <RelatorioTR
+            totalContracts={allContracts.length}
+            activeContracts={allContracts.filter(c => c.status === 'publicado').length}
+            closedContracts={allContracts.filter(c => c.status === 'fechado').length}
+            totalCandidatures={totalCandidatures}
+            acceptedCandidatures={acceptedCandidatures}
+            totalValue={valorTotal}
+          />
+        )}
 
         {/* Filtros + CTA */}
         <div className="flex items-center justify-between gap-md flex-wrap">
