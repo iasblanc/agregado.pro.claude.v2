@@ -128,6 +128,22 @@ export function PerfilForm({
         </Card>
       )}
 
+      {/* Trocar senha */}
+      <Card>
+        <CardBody>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-body-sm font-medium text-ag-primary">Senha de acesso</p>
+              <p className="caption text-ag-muted mt-xs">Para alterar sua senha, use o link de recuperação</p>
+            </div>
+            <a href="/recuperar-senha"
+              className="text-body-sm text-ag-secondary hover:text-ag-primary border border-ag-border px-md py-sm rounded-md transition-colors">
+              Alterar →
+            </a>
+          </div>
+        </CardBody>
+      </Card>
+
       {/* Logout */}
       <Card>
         <CardBody>

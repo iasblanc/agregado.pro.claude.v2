@@ -1,19 +1,23 @@
 'use client'
-import { useTransition } from 'react'
-import { useRouter }     from 'next/navigation'
+import { useTransition }  from 'react'
+import { useRouter }      from 'next/navigation'
+import { useToast }       from '@/components/ui/toast'
 
 export function CandidaturaActions({ candidaturaId }: { candidaturaId: string }) {
   const [isPending, startTransition] = useTransition()
+  const { success, error } = useToast()
   const router = useRouter()
 
   async function handleAction(action: 'aceitar' | 'rejeitar') {
     startTransition(async () => {
-      await fetch(`/api/candidatures?id=${candidaturaId}`, {
+      const res = await fetch(`/api/candidatures?id=${candidaturaId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify({ action }),
       })
+      if (!res.ok) { error('Erro ao atualizar candidatura'); return }
+      success(action === 'aceitar' ? '✅ Candidatura aceita!' : 'Candidatura recusada')
       router.refresh()
     })
   }

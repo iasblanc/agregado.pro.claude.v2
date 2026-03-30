@@ -58,6 +58,13 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
     admin.from('dre_entries').select('period, entry_type, amount').eq('owner_id', profile.id).order('period', { ascending: false }).limit(300),
   ])
 
+  // Período anterior para delta
+  const prevPeriod  = periods[periods.indexOf(period) + 1] ?? null
+  const { data: prevEntries } = prevPeriod
+    ? await admin.from('dre_entries').select('entry_type, amount').eq('owner_id', profile.id).eq('period', prevPeriod)
+    : { data: [] }
+  const prevReceita = (prevEntries ?? []).filter(e => e.entry_type === 'receita').reduce((s, e) => s + Number(e.amount), 0)
+
   const allEntries = (entries ?? []) as DreEntry[]
   const dre = calcDRE(allEntries)
 
@@ -100,7 +107,7 @@ export default async function DrePage({ searchParams }: { searchParams: Promise<
         {/* Resumo do DRE */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
           {[
-            { label: 'Receita',   val: dre.receita,   color: 'var(--color-success)' },
+            { label: 'Receita',   val: dre.receita,   color: 'var(--color-success)', delta: prevReceita > 0 ? ((dre.receita - prevReceita) / prevReceita * 100) : null },
             { label: 'Custo Total', val: dre.custo,   color: 'var(--color-danger)' },
             { label: 'Resultado', val: dre.resultado, color: dre.resultado >= 0 ? 'var(--color-success)' : 'var(--color-danger)' },
             { label: 'Custo/km',  val: dre.custoKm,  suffix: '/km', color: 'var(--color-text-primary)' },
