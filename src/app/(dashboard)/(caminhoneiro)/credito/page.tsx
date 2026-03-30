@@ -143,6 +143,9 @@ export default async function CreditoPage({
             ) : (
               <p className="text-body-sm text-ag-muted mb-lg">Nenhum contrato aceito ainda.</p>
             )}
+            {isEligible && limiteSugerido > 0 && (
+              <SimuladorAntecipacao limite={limiteSugerido} />
+            )}
             {isEligible ? (
               <Link href="/credito?antecipar=1">
                 <Button fullWidth>Solicitar antecipação</Button>
