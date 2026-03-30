@@ -1,84 +1,49 @@
 'use client'
 
-import Link           from 'next/link'
+import Link            from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useUser }    from '@/hooks/useUser'
+import { useUser }     from '@/hooks/useUser'
 
-// ─── Nav por role ─────────────────────────────────────────────────
+type NavItem = { href: string; label: string; icon: string }
 
-type MobileNavItem = { href: string; label: string; icon: string; phase: 1 | 2 | 3 }
-
-const CAMINHONEIRO: MobileNavItem[] = [
-  { href: '/gestao',    label: 'Gestão',    icon: '📊', phase: 1 },
-  { href: '/dre',       label: 'DRE',       icon: '📈', phase: 1 },
-  { href: '/contratos', label: 'Contratos', icon: '📋', phase: 2 },
-  { href: '/banco',     label: 'Banco',     icon: '💳', phase: 2 },
+const CAMINHONEIRO: NavItem[] = [
+  { href: '/gestao',              label: 'Gestão',  icon: '📊' },
+  { href: '/dre',                 label: 'DRE',     icon: '📈' },
+  { href: '/contratos',           label: 'Vagas',   icon: '📋' },
+  { href: '/gestao/calculadora',  label: 'Calcular', icon: '🧮' },
+  { href: '/score',               label: 'Score',   icon: '🎯' },
 ]
 
-const TRANSPORTADORA: MobileNavItem[] = [
-  { href: '/contratos', label: 'Contratos', icon: '📋', phase: 2 },
-  { href: '/perfil',    label: 'Perfil',    icon: '🏢', phase: 1 },
+const TRANSPORTADORA: NavItem[] = [
+  { href: '/meus-contratos', label: 'Contratos', icon: '📋' },
+  { href: '/perfil',         label: 'Perfil',    icon: '🏢' },
 ]
-
-const CURRENT_PHASE = 1
-
-// ─── Componente ───────────────────────────────────────────────────
 
 export function MobileNav() {
   const pathname = usePathname()
-  const { role } = useUser()
+  const { role }  = useUser()
 
   const items = role === 'transportadora' ? TRANSPORTADORA : CAMINHONEIRO
 
   return (
-    <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-ag-bg border-t border-ag-border z-50 safe-area-pb"
-      aria-label="Navegação mobile"
-    >
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-pb"
+      style={{ background: 'var(--color-bg)', borderTop: '1px solid var(--color-border)' }}
+      aria-label="Navegação mobile">
       <div className="flex items-stretch">
-        {items.map((item) => {
-          const isActive = pathname.startsWith(item.href)
-          const isLocked = item.phase > CURRENT_PHASE
-
+        {items.map(item => {
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           return (
-            <div key={item.href} className="flex-1">
-              {isLocked ? (
-                <div
-                  className="flex flex-col items-center justify-center gap-xs py-sm opacity-40 cursor-not-allowed"
-                  aria-disabled="true"
-                >
-                  <span className="text-[18px]" aria-hidden="true">{item.icon}</span>
-                  <span className="text-[10px] font-medium text-ag-muted">{item.label}</span>
-                </div>
-              ) : (
-                <Link
-                  href={item.href}
-            prefetch={false}
-                  className={[
-                    'flex flex-col items-center justify-center gap-xs py-sm transition-colors',
-                    isActive ? 'text-ag-primary' : 'text-ag-muted hover:text-ag-secondary',
-                  ].join(' ')}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <span className="text-[18px]" aria-hidden="true">{item.icon}</span>
-                  <span
-                    className={[
-                      'text-[10px] font-medium',
-                      isActive ? 'text-ag-primary' : 'text-ag-muted',
-                    ].join(' ')}
-                  >
-                    {item.label}
-                  </span>
-                  {/* Indicador ativo */}
-                  {isActive && (
-                    <span
-                      className="absolute bottom-0 w-5 h-[2px] rounded-full bg-ag-primary"
-                      aria-hidden="true"
-                    />
-                  )}
-                </Link>
+            <Link key={item.href} href={item.href} prefetch={false}
+              className="flex-1 flex flex-col items-center justify-center gap-xs py-sm transition-colors"
+              style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}
+              aria-current={isActive ? 'page' : undefined}>
+              <span className="text-[18px]" aria-hidden="true">{item.icon}</span>
+              <span className="text-[10px] font-medium">{item.label}</span>
+              {isActive && (
+                <span className="absolute bottom-0 w-6 h-[2px] rounded-full"
+                  style={{ background: 'var(--color-text-primary)' }} />
               )}
-            </div>
+            </Link>
           )
         })}
       </div>
