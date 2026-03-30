@@ -1,200 +1,165 @@
-import type { Metadata }      from 'next'
-import { redirect }            from 'next/navigation'
-import { Suspense }            from 'react'
-import { createClient, getServerUser, createAdminClient } from '@/lib/supabase/server'
-import { Header }              from '@/components/layout/Header'
-import { LoyaltyCard }         from '@/components/loyalty/LoyaltyCard'
-import { BenefitsGrid }        from '@/components/loyalty/BenefitsGrid'
-import { Badge }               from '@/components/ui/badge'
-import { getMyLoyaltyAccount } from '@/services/loyalty'
-import { calculateTier, TIER_CONFIG, type LoyaltyTier, type LoyaltyMetrics } from '@/services/loyalty/engine'
-import { formatDate }          from '@/lib/utils'
-
-export const metadata: Metadata = { title: 'Clube de Benefícios' }
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
+import { redirect }      from 'next/navigation'
+import Link              from 'next/link'
+import { getServerUser, createAdminClient } from '@/lib/supabase/server'
+import { Header }        from '@/components/layout/Header'
+import { Card, CardHeader, CardBody } from '@/components/ui/card'
+
+export const metadata: Metadata = { title: 'Benefícios' }
+
+const PARCEIROS = [
+  { icon: '⛽', nome: 'Rede de Postos', categoria: 'Combustível', desc: 'Desconto em toda a rede parceira', beneficio: '5% de desconto', tier: 'bronze' },
+  { icon: '🔧', nome: 'Oficinas Parceiras', categoria: 'Manutenção', desc: 'Rede de oficinas credenciadas', beneficio: '10% de desconto', tier: 'bronze' },
+  { icon: '🏨', nome: 'Pousos na Estrada', categoria: 'Hospedagem', desc: 'Pernoite em áreas de descanso parceiras', beneficio: '15% de desconto', tier: 'prata' },
+  { icon: '🍽️', nome: 'Restaurantes de Beira de Estrada', categoria: 'Alimentação', desc: 'Refeições nos parceiros da rede', beneficio: '8% de desconto', tier: 'prata' },
+  { icon: '🛡️', nome: 'Seguros Especiais', categoria: 'Proteção', desc: 'Seguro de carga e do caminhão', beneficio: 'Condições exclusivas', tier: 'ouro' },
+  { icon: '💳', nome: 'Cartão Combustível', categoria: 'Financeiro', desc: 'Pagamento facilitado nos postos', beneficio: 'Sem anuidade', tier: 'ouro' },
+]
+
+const TIER_ORDER = ['bronze', 'prata', 'ouro', 'platina']
+const TIER_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  bronze:  { label: '🥉 Bronze',  color: '#92400E', bg: '#FEF3C7' },
+  prata:   { label: '🥈 Prata',   color: '#4B5563', bg: '#F3F4F6' },
+  ouro:    { label: '🥇 Ouro',    color: '#B45309', bg: '#FFFBEB' },
+  platina: { label: '💎 Platina', color: '#2563EB', bg: '#DBEAFE' },
+}
+
 export default async function BeneficiosPage() {
-  const supabase = await createClient()
   const user = await getServerUser()
-  if (!user) return null  // layout já redireciona
+  if (!user) return null
   const admin = createAdminClient()
 
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('id, role, full_name')
-    .eq('user_id', user.id)
-    .single()
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('user_id', user.id).single()
+  if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-  if (!profile || profile.role !== 'caminhoneiro') redirect('/gestao')
+  // Buscar conta de fidelidade (pode não existir ainda)
+  const { data: loyalty } = await admin.from('loyalty_accounts')
+    .select('tier, points_available, months_active').eq('owner_id', profile.id).maybeSingle()
 
-  const loyaltyData = await getMyLoyaltyAccount()
+  const currentTier  = loyalty?.tier ?? 'bronze'
+  const points       = loyalty?.points_available ?? 0
+  const monthsActive = loyalty?.months_active ?? 0
+  const tierCfg      = TIER_CONFIG[currentTier] ?? TIER_CONFIG.bronze
 
-  if (!loyaltyData) {
-    return (
-      <div className="flex flex-col h-full">
-        <Header title="Clube de Benefícios" />
-        <main className="flex-1 px-lg py-xl text-center space-y-md max-w-sm mx-auto pt-[var(--space-4xl)]">
-          <p className="text-[48px]" aria-hidden="true">🏆</p>
-          <h2 className="font-display text-display-sm font-medium text-ag-primary">
-            Bem-vindo ao Clube
-          </h2>
-          <p className="text-body text-ag-secondary">
-            Sua conta de fidelidade será criada automaticamente quando você começar a usar a plataforma.
-          </p>
-        </main>
-      </div>
-    )
-  }
-
-  const { account, recentEvents, activeRedemptions } = loyaltyData
-
-  // Calcular tier atual com métricas
-  const metrics: LoyaltyMetrics = {
-    monthsActive:    account.months_active,
-    monthsPositive:  account.months_positive,
-    contractsClosed: account.contracts_closed,
-    kmAccumulated:   Number(account.km_total_accumulated),
-    avgScoreLast6m:  account.avg_score_last_6m,
-    totalCardSpend:  Number(account.total_card_spend),
-  }
-
-  const tierResult = calculateTier(metrics)
-  const tier       = account.tier as LoyaltyTier
-
-  // Pontos por categoria de evento
-  const pointsByCategory = recentEvents.reduce((acc: Record<string, number>, e: any) => {
-    acc[e.event_type] = (acc[e.event_type] ?? 0) + e.points_earned
-    return acc
-  }, {})
+  // Parceiros disponíveis no tier atual
+  const tierIdx   = TIER_ORDER.indexOf(currentTier)
+  const available = PARCEIROS.filter(p => TIER_ORDER.indexOf(p.tier) <= tierIdx)
+  const locked    = PARCEIROS.filter(p => TIER_ORDER.indexOf(p.tier) > tierIdx)
 
   return (
     <div className="flex flex-col h-full">
-      <Header
-        title="Clube de Benefícios"
-        subtitle={`${account.points_available.toLocaleString('pt-BR')} pontos disponíveis`}
-      />
+      <Header title="Benefícios" subtitle="Clube de vantagens para agregados" />
+      <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto max-w-2xl">
 
-      <main className="flex-1 px-lg py-xl md:px-xl">
-        <div className="max-w-2xl mx-auto space-y-xl">
-
-          {/* Card de fidelidade */}
-          <LoyaltyCard
-            tier={tier}
-            points={account.points_available}
-            tierResult={tierResult}
-            ownerName={profile.full_name}
-            monthsActive={account.months_active}
-          />
-
-          {/* Resgates ativos */}
-          {activeRedemptions.length > 0 && (
-            <section className="bg-ag-surface border border-ag-border rounded-xl overflow-hidden shadow-sm">
-              <div className="px-lg py-md border-b border-ag-border flex items-center justify-between">
-                <h2 className="font-display text-display-sm font-medium text-ag-primary">
-                  Benefícios ativos
-                </h2>
-                <Badge variant="success" dot>{activeRedemptions.length}</Badge>
+        {/* Card de tier */}
+        <Card elevated>
+          <CardBody>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="caption text-ag-muted mb-xs">Seu nível</p>
+                <span className="px-md py-xs rounded-pill text-body-sm font-medium"
+                  style={{ background: tierCfg.bg, color: tierCfg.color }}>
+                  {tierCfg.label}
+                </span>
+                <p className="text-body-sm text-ag-secondary mt-sm">
+                  {monthsActive} {monthsActive === 1 ? 'mês' : 'meses'} ativo · {points} pontos disponíveis
+                </p>
               </div>
-              <div className="divide-y divide-ag-border">
-                {(activeRedemptions as any[]).map((r) => (
-                  <div key={r.id} className="px-lg py-md flex items-center justify-between gap-md">
-                    <div className="min-w-0">
-                      <p className="text-body-sm font-medium text-ag-primary truncate">
-                        {r.benefit_name}
-                      </p>
-                      <p className="caption text-ag-muted">
-                        Código: <span className="font-mono font-medium text-ag-primary">{r.code}</span>
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <Badge variant="success">Ativo</Badge>
-                      {r.expires_at && (
-                        <p className="caption text-ag-muted mt-xs">
-                          Até {formatDate(r.expires_at)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="text-right">
+                <p className="text-[48px]">🦏</p>
               </div>
-            </section>
-          )}
-
-          {/* Catálogo de benefícios */}
-          <section>
-            <div className="mb-lg">
-              <p className="overline">Catálogo</p>
-              <h2 className="font-display text-display-sm font-medium text-ag-primary mt-xs">
-                Benefícios disponíveis
-              </h2>
             </div>
-            <BenefitsGrid
-              userTier={tier}
-              pointsAvailable={account.points_available}
-            />
-          </section>
 
-          {/* Como ganhar pontos */}
-          <section className="bg-ag-surface border border-ag-border rounded-xl p-lg space-y-lg shadow-sm">
-            <h3 className="font-display text-display-sm font-medium text-ag-primary">
-              Como ganhar pontos
-            </h3>
-            <div className="grid grid-cols-2 gap-sm">
+            {/* Barra de progresso para próximo tier */}
+            {currentTier !== 'platina' && (
+              <div className="mt-md">
+                <div className="flex justify-between mb-xs">
+                  <span className="caption text-ag-muted">{tierCfg.label.split(' ')[1]}</span>
+                  <span className="caption text-ag-muted">{TIER_CONFIG[TIER_ORDER[tierIdx + 1]]?.label.split(' ')[1]}</span>
+                </div>
+                <div className="h-1.5 rounded-full" style={{ background: 'var(--color-border)' }}>
+                  <div className="h-full rounded-full" style={{ width: `${Math.min((monthsActive / 6) * 100, 100)}%`, background: tierCfg.color }} />
+                </div>
+                <p className="caption text-ag-muted mt-xs">
+                  {Math.max(0, 6 - monthsActive)} meses restantes para o próximo nível
+                </p>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Como ganhar pontos */}
+        <Card>
+          <CardHeader label="Como ganhar pontos" />
+          <CardBody>
+            <div className="grid grid-cols-2 gap-md">
               {[
-                { icon: '📊', label: 'Lançar no DRE',      pts: '5 pts'     },
-                { icon: '💳', label: 'Usar o cartão',       pts: '2 pts/R$1' },
-                { icon: '📋', label: 'Fechar contrato',      pts: '200 pts'   },
-                { icon: '⭐', label: 'Avaliação 4+',         pts: '50 pts'    },
-                { icon: '📈', label: 'Melhorar score',       pts: '150 pts'   },
-                { icon: '🚛', label: 'Meta de km no mês',    pts: '100+ pts'  },
-                { icon: '✅', label: 'Fatura em dia',         pts: '80 pts'    },
-                { icon: '👥', label: 'Indicar amigo',         pts: '500 pts'   },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center gap-sm px-md py-sm rounded-lg bg-ag-bg border border-ag-border"
-                >
-                  <span className="text-[18px] shrink-0" aria-hidden="true">{item.icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-body-sm text-ag-primary truncate">{item.label}</p>
-                    <p className="caption font-medium" style={{ color: 'var(--color-success)' }}>
-                      +{item.pts}
-                    </p>
+                ['📋', 'Lançamento no DRE', '10 pts'],
+                ['📝', 'Contrato fechado', '100 pts'],
+                ['⭐', 'Avaliação 5 estrelas', '50 pts'],
+                ['📅', 'Mês positivo', '200 pts'],
+              ].map(([icon, label, pts]) => (
+                <div key={label} className="flex items-center gap-sm py-sm border-b border-ag-border last:border-0">
+                  <span className="text-[20px]">{icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body-sm text-ag-primary">{label}</p>
+                    <p className="caption font-medium" style={{ color: 'var(--color-success)' }}>+{pts}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="caption text-ag-muted">
-              Multiplicador ativo: <strong className="text-ag-primary">{TIER_CONFIG[tier].icon} {tierResult.pointsMultiplier}×</strong> (tier {TIER_CONFIG[tier].label})
-            </p>
-          </section>
+          </CardBody>
+        </Card>
 
-          {/* Histórico de pontos */}
-          {recentEvents.length > 0 && (
-            <Suspense fallback={null}>
-              <section className="bg-ag-surface border border-ag-border rounded-xl overflow-hidden shadow-sm">
-                <div className="px-lg py-md border-b border-ag-border">
-                  <h3 className="font-display text-display-sm font-medium text-ag-primary">
-                    Histórico recente
-                  </h3>
-                </div>
-                <div className="divide-y divide-ag-border">
-                  {(recentEvents as any[]).slice(0, 8).map((e) => (
-                    <div key={e.id} className="px-lg py-md flex items-center justify-between gap-md">
-                      <div className="min-w-0">
-                        <p className="text-body-sm text-ag-primary truncate">{e.description}</p>
-                        <p className="caption text-ag-muted">{formatDate(e.created_at)}</p>
-                      </div>
-                      <span className="text-body-sm font-medium shrink-0" style={{ color: 'var(--color-success)' }}>
-                        +{e.points_earned.toLocaleString('pt-BR')} pts
-                      </span>
+        {/* Benefícios disponíveis */}
+        {available.length > 0 && (
+          <Card>
+            <CardHeader label={`Disponíveis para você (${available.length})`} />
+            <CardBody>
+              <div className="space-y-md">
+                {available.map(p => (
+                  <div key={p.nome} className="flex items-center gap-md py-sm border-b border-ag-border last:border-0">
+                    <span className="text-[28px] shrink-0">{p.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-body-sm font-medium text-ag-primary">{p.nome}</p>
+                      <p className="caption text-ag-muted">{p.desc}</p>
                     </div>
-                  ))}
-                </div>
-              </section>
-            </Suspense>
-          )}
-        </div>
+                    <span className="text-body-sm font-medium shrink-0"
+                      style={{ color: 'var(--color-success)' }}>
+                      {p.beneficio}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Bloqueados */}
+        {locked.length > 0 && (
+          <Card>
+            <CardHeader label="Desbloqueie subindo de nível" />
+            <CardBody>
+              <div className="space-y-md">
+                {locked.map(p => {
+                  const reqTier = TIER_CONFIG[p.tier]
+                  return (
+                    <div key={p.nome} className="flex items-center gap-md py-sm border-b border-ag-border last:border-0 opacity-50">
+                      <span className="text-[28px] shrink-0 grayscale">{p.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-body-sm font-medium text-ag-primary">{p.nome}</p>
+                        <p className="caption text-ag-muted">Disponível no nível {reqTier?.label}</p>
+                      </div>
+                      <span className="caption text-ag-muted shrink-0">🔒</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardBody>
+          </Card>
+        )}
       </main>
     </div>
   )
