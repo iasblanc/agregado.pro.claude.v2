@@ -180,6 +180,11 @@ export default async function ContratosPage({
                         {formatBRL(Number(c.contract_value))}
                       </p>
                       <p className="caption text-ag-muted">{PAYMENT_LABELS[c.payment_type] ?? ''}</p>
+                      {Number(c.route_km) > 0 && c.payment_type === 'por_viagem' && (
+                        <p className="caption text-ag-muted">
+                          {formatBRL(Number(c.contract_value) / Number(c.route_km))}/km
+                        </p>
+                      )}
                     </div>
                   </div>
 

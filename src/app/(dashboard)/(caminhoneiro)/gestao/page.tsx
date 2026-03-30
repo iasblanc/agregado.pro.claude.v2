@@ -30,7 +30,11 @@ const ENTRY_ICONS: Record<string, string> = {
   receita: '💵', custo_fixo: '📌', custo_variavel: '🔄', pessoal: '👤',
 }
 
-export default async function GestaoPage() {
+export default async function GestaoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>
+}) {
   const user = await getServerUser()
   if (!user) return null
   const admin = createAdminClient()
@@ -38,7 +42,8 @@ export default async function GestaoPage() {
   const { data: profile } = await admin.from('profiles').select('id, role, full_name').eq('user_id', user.id).single()
   if (!profile || profile.role !== 'caminhoneiro') redirect('/meus-contratos')
 
-  const period      = getCurrentPeriod()
+  const params      = await searchParams
+  const period      = params.period ?? getCurrentPeriod()
   const prevPeriod  = getLastPeriods(2)[1] ?? null
   const periodLabel = formatPeriod(period)
 

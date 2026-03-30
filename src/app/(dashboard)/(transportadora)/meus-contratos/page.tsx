@@ -57,27 +57,12 @@ export default async function MeusContratosPage({
   }
 
   // Buscar contratos + candidaturas pendentes em paralelo
-  const [{ data: contracts }, { data: pendingCands }, { data: recentCands }] = await Promise.all([
-    admin.from('contracts')
-      .select(`id, title, route_origin, route_destination, route_km,
-               vehicle_type, contract_value, payment_type,
-               status, candidates_count, published_at, created_at`)
-      .eq('publisher_id', profile.id)
-      .order('created_at', { ascending: false }),
-    admin.from('candidatures')
-      .select('id, contract_id, status')
-      .in('contract_id',
-        /* subquery via in — fetch IDs first */
-        ['placeholder']  // will be replaced
-      )
-      .eq('status', 'pendente'),
-    admin.from('candidatures')
-      .select(`id, contract_id, status, updated_at,
-               candidate:profiles!candidatures_candidate_id_fkey(full_name)`)
-      .in('status', ['aceita', 'pendente'])
-      .order('updated_at', { ascending: false })
-      .limit(3),
-  ])
+  const { data: contracts } = await admin.from('contracts')
+    .select(`id, title, route_origin, route_destination, route_km,
+             vehicle_type, contract_value, payment_type,
+             status, candidates_count, published_at, created_at`)
+    .eq('publisher_id', profile.id)
+    .order('created_at', { ascending: false })
 
   const allContracts = contracts ?? []
   const contractIds  = allContracts.map(c => c.id)

@@ -152,7 +152,7 @@ export default async function ContratoDetalheTRPage({ params }: { params: Promis
               <div className="text-center py-lg">
                 <p className="text-[32px] mb-sm">📬</p>
                 <p className="text-body-sm text-ag-muted">
-                  Nenhuma candidatura ainda. O contrato está publicado e visível no marketplace.
+                  Nenhuma candidatura ainda. O contrato está publicado e visível no marketplace para todos os caminhoneiros cadastrados.
                 </p>
               </div>
             ) : (

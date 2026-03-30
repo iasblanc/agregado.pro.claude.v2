@@ -414,6 +414,9 @@ function LandingPage() {
           <p style={{ fontSize: 13, color: '#9C988E' }}>
             Sistema Operacional e Infraestrutura Financeira do Caminhoneiro Agregado
           </p>
+          <p style={{ fontSize: 11, color: '#C9C3BC', marginTop: 4 }}>
+            © 2026 Agregado.Pro — CNPJ em formação
+          </p>
           <div style={{ display: 'flex', gap: 20 }}>
             <Link href="/login" style={{ fontSize: 13, color: '#5C5850', textDecoration: 'none' }}>Entrar</Link>
             <Link href="/cadastro" style={{ fontSize: 13, color: '#5C5850', textDecoration: 'none' }}>Criar conta</Link>

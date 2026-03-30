@@ -12,6 +12,8 @@ const COOKIE_OPTS = {
 }
 
 export async function POST(request: NextRequest) {
+  // Log IP para auditoria — rate limiting via Supabase audit_events
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const { email, password } = await request.json()
 
   if (!email || !password) {

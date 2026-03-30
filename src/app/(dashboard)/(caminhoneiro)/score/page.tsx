@@ -84,11 +84,12 @@ export default async function ScorePage() {
     .select('id', { count: 'exact', head: true }).eq('owner_id', profile.id)
 
   const hasData  = (dreCount ?? 0) > 0
-  const tier     = scoreRecord ? TIER_CONFIG[scoreRecord.tier] ?? TIER_CONFIG.insuficiente : null
+  const tier      = scoreRecord ? TIER_CONFIG[scoreRecord.tier] ?? TIER_CONFIG.insuficiente : null
+  const primeiroNome = profile.full_name?.split(' ')[0] ?? 'Motorista'
 
   return (
     <div className="flex flex-col h-full">
-      <Header title="Score de Crédito" subtitle="Baseado nos seus dados financeiros reais" />
+      <Header title={`Score de Crédito`} subtitle={scoreRecord ? `${primeiroNome}, seu score é ${scoreRecord.score} pontos` : "Baseado nos seus dados financeiros reais"} />
       <main className="flex-1 px-lg py-xl md:px-xl space-y-xl overflow-auto max-w-2xl">
 
         {/* Score principal */}

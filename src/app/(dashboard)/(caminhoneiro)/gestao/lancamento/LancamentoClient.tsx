@@ -7,6 +7,18 @@ import { Header }  from '@/components/layout/Header'
 import { Button }  from '@/components/ui/button'
 import { Input }   from '@/components/ui/input'
 
+
+// Sugestões de valor por categoria
+const SUGESTOES: Record<string, string> = {
+  'Diesel / Combustível': '450,00',
+  'Pedágio': '120,00',
+  'Parcela financiamento': '2.200,00',
+  'Seguro do caminhão': '380,00',
+  'Manutenção e peças': '300,00',
+  'Frete fixo mensal': '8.500,00',
+  'Frete por viagem': '4.200,00',
+}
+
 // Categorias por tipo
 const CATEGORIAS = {
   receita:          ['Frete fixo mensal', 'Frete por viagem', 'Frete por km', 'Bônus/prêmio', 'Outros'],
@@ -165,7 +177,7 @@ export function LancamentoClient({
             name="valor"
             type="text"
             inputMode="decimal"
-            placeholder="0,00"
+            placeholder={SUGESTOES[categoria] ? `Sugerido: R$ ${SUGESTOES[categoria]}` : "0,00"}
             required
             value={valor}
             onChange={e => handleValorChange(e.target.value)}
