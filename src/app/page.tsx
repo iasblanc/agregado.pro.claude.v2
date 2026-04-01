@@ -348,7 +348,51 @@ function LandingPage() {
         </div>
       </section>
 
+      
+      {/* DEPOIMENTOS */}
+      <section className="section">
+        <p className="overline" style={{ textAlign: 'center', marginBottom: 48 }}>Quem usa, não para</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+          {[
+            {
+              nome: 'Marcos T.',
+              tipo: 'Caminhoneiro Truck — SP',
+              texto: 'Descobri que meu custo/km era R$ 2,30, mas aceitava fretes que pagavam R$ 2,10/km. Estava trabalhando de graça há 6 meses. Hoje só aceito contrato que cobre meu custo real.',
+              resultado: '+R$ 1.400/mês',
+            },
+            {
+              nome: 'Rodrigo F.',
+              tipo: 'Agregado Cavalo 6x2 — MG',
+              texto: 'O DRE me mostrou que diesel estava consumindo 62% da minha receita. Negociei a rota, mudei o percurso de abastecimento e recuperei 8% de margem.',
+              resultado: 'Margem: 5% → 13%',
+            },
+            {
+              nome: 'Carla M.',
+              tipo: 'REVESP Transportes — SP',
+              texto: 'Antes, escolhia agregado no boca a boca. Agora vejo o custo/km real de cada caminhoneiro antes de aceitar. Isso mudou a qualidade dos contratos que fechamos.',
+              resultado: '3 agregados recrutados',
+            },
+          ].map(d => (
+            <div key={d.nome} className="card-surface">
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: '#5C5850', marginBottom: 20, fontStyle: 'italic' }}>
+                "{d.texto}"
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 14 }}>{d.nome}</p>
+                  <p style={{ fontSize: 12, color: '#9C988E' }}>{d.tipo}</p>
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#2A6B3A', background: '#EDF5EE', padding: '4px 12px', borderRadius: 100 }}>
+                  {d.resultado}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <hr className="divider" />
+<hr className="divider" />
 
       {/* FASES */}
       <section className="section">

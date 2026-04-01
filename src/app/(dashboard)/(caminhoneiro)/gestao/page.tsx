@@ -408,6 +408,15 @@ export default async function GestaoPage({
                 </CardBody>
               </Card>
             </Link>
+            <Link href="/gestao/anual">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
+                <CardBody>
+                  <p className="text-[24px] mb-sm">📆</p>
+                  <p className="text-body-sm font-medium text-ag-primary">Visão Anual</p>
+                  <p className="caption text-ag-muted mt-xs">12 meses comparados</p>
+                </CardBody>
+              </Card>
+            </Link>
             <Link href="/gestao/calculadora">
               <Card className="cursor-pointer hover:shadow-md transition-shadow h-full">
                 <CardBody>

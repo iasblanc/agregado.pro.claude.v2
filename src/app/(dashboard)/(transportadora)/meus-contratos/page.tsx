@@ -162,6 +162,22 @@ export default async function MeusContratosPage({
                 <Link href="/meus-contratos?novo=1">
                   <Button>Publicar primeira vaga</Button>
                 </Link>
+                {filter === 'todos' && (
+                  <div className="mt-xl space-y-sm text-left max-w-sm mx-auto">
+                    <p className="caption text-ag-muted font-medium uppercase tracking-wider">Como funciona</p>
+                    {[
+                      ['📝', 'Crie o contrato com a rota e tipo de veículo'],
+                      ['🌐', 'Publique no marketplace — todos os caminhoneiros veem'],
+                      ['📬', 'Receba candidaturas com custo/km real de cada motorista'],
+                      ['✅', 'Aceite o caminhoneiro que melhor atende sua necessidade'],
+                    ].map(([icon, text]) => (
+                      <div key={text} className="flex items-start gap-sm">
+                        <span className="text-[16px] shrink-0 mt-xs">{icon}</span>
+                        <p className="text-body-sm text-ag-secondary">{text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardBody>
           </Card>
