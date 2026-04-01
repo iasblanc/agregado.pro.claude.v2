@@ -10,6 +10,63 @@ import { formatBRL, getCurrentPeriod, formatPeriod, getLastPeriods } from '@/lib
 
 export const metadata: Metadata = { title: 'Relatório Mensal' }
 
+
+// Componente DonutChart — SVG puro
+function DonutChart({ slices }: { slices: { label: string; value: number; color: string }[] }) {
+  const total = slices.reduce((s, sl) => s + sl.value, 0)
+  if (total === 0) return null
+  const R = 60, cx = 80, cy = 80, innerR = 36
+  let cumAngle = -Math.PI / 2
+  const paths = slices.map(sl => {
+    const angle = (sl.value / total) * 2 * Math.PI
+    const x1 = cx + R * Math.cos(cumAngle)
+    const y1 = cy + R * Math.sin(cumAngle)
+    cumAngle += angle
+    const x2 = cx + R * Math.cos(cumAngle)
+    const y2 = cy + R * Math.sin(cumAngle)
+    const large = angle > Math.PI ? 1 : 0
+    const xi1 = cx + innerR * Math.cos(cumAngle - angle)
+    const yi1 = cy + innerR * Math.sin(cumAngle - angle)
+    const xi2 = cx + innerR * Math.cos(cumAngle)
+    const yi2 = cy + innerR * Math.sin(cumAngle)
+    return { d: `M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi2.toFixed(1)},${yi2.toFixed(1)} A${innerR},${innerR} 0 ${large},0 ${xi1.toFixed(1)},${yi1.toFixed(1)} Z`, color: sl.color, label: sl.label, value: sl.value }
+  })
+  const COLORS = ['#DC2626','#D97706','#7C3AED','#2563EB','#059669','#EC4899','#0891B2','#65A30D']
+  const coloredSlices = slices.map((sl, i) => ({ ...sl, color: COLORS[i % COLORS.length] }))
+  let cumAngle2 = -Math.PI / 2
+  const paths2 = coloredSlices.map(sl => {
+    const angle = (sl.value / total) * 2 * Math.PI
+    const x1 = cx + R * Math.cos(cumAngle2)
+    const y1 = cy + R * Math.sin(cumAngle2)
+    cumAngle2 += angle
+    const x2 = cx + R * Math.cos(cumAngle2)
+    const y2 = cy + R * Math.sin(cumAngle2)
+    const large = angle > Math.PI ? 1 : 0
+    const xi1 = cx + innerR * Math.cos(cumAngle2 - angle)
+    const yi1 = cy + innerR * Math.sin(cumAngle2 - angle)
+    const xi2 = cx + innerR * Math.cos(cumAngle2)
+    const yi2 = cy + innerR * Math.sin(cumAngle2)
+    return { d: `M${x1.toFixed(1)},${y1.toFixed(1)} A${R},${R} 0 ${large},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi2.toFixed(1)},${yi2.toFixed(1)} A${innerR},${innerR} 0 ${large},0 ${xi1.toFixed(1)},${yi1.toFixed(1)} Z`, color: sl.color, label: sl.label, value: sl.value }
+  })
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+      <svg viewBox="0 0 160 160" style={{ width: 140, height: 140, flexShrink: 0 }}>
+        {paths2.map((p, i) => <path key={i} d={p.d} fill={p.color} opacity={0.85} />)}
+        <circle cx={cx} cy={cy} r={innerR} fill="var(--color-bg)" />
+      </svg>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {paths2.slice(0, 6).map((p, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: p.color, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: 'var(--color-text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.label}</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--color-text-primary)', flexShrink: 0 }}>{((p.value/total)*100).toFixed(0)}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default async function RelatorioPage({
   searchParams,
 }: {
@@ -145,6 +202,16 @@ export default async function RelatorioPage({
             </Card>
           ))}
         </div>
+
+        {/* Donut chart de custos */}
+        {catRanking.length > 0 && totalCusto > 0 && (
+          <Card>
+            <CardHeader label="Distribuição de custos" />
+            <CardBody>
+              <DonutChart slices={catRanking.slice(0, 8).map(([label, value]) => ({ label, value, color: '' }))} />
+            </CardBody>
+          </Card>
+        )}
 
         {/* Top custos */}
         {catRanking.length > 0 && (

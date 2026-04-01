@@ -91,6 +91,17 @@ export default async function GestaoPage({
   const hasData = (entries?.length ?? 0) > 0
   const nome    = profile.full_name.split(' ')[0]
 
+  // Sparkline — últimos 6 meses de resultado
+  const sparkByP: Record<string, { r: number; c: number }> = {}
+  for (const e of histAll ?? []) {
+    if (!sparkByP[e.period]) sparkByP[e.period] = { r: 0, c: 0 }
+    if (e.entry_type === 'receita') sparkByP[e.period].r += Number(e.amount)
+    else sparkByP[e.period].c += Number(e.amount)
+  }
+  const sparkData = Object.entries(sparkByP)
+    .sort(([a], [b]) => a.localeCompare(b)).slice(-6)
+    .map(([, v]) => ({ resultado: v.r - v.c }))
+
   // Status do resultado
   const statusColor = !hasData ? 'var(--color-text-muted)'
     : dre.resultado >= 0 ? 'var(--color-success)' : 'var(--color-danger)'
@@ -261,6 +272,54 @@ export default async function GestaoPage({
           </Card>
         )}
 
+
+
+        {/* Insights automáticos */}
+        {hasData && (() => {
+          const insights: { icon: string; text: string; color: string }[] = []
+          
+          if (dre.margem !== null) {
+            if (dre.margem < 10 && dre.margem >= 0) {
+              insights.push({ icon: '⚠️', text: `Margem baixa este mês (${dre.margem.toFixed(1)}%). Considere reduzir custos variáveis.`, color: 'var(--color-warning)' })
+            } else if (dre.margem >= 20) {
+              insights.push({ icon: '✅', text: `Ótima margem de ${dre.margem.toFixed(1)}%! Mês saudável financeiramente.`, color: 'var(--color-success)' })
+            }
+          }
+          
+          if (dre.resultado < 0) {
+            insights.push({ icon: '🚨', text: `Resultado negativo em ${formatPeriod(period)}. Suas receitas não cobriram os custos.`, color: 'var(--color-danger)' })
+          }
+          
+          if (prevPeriod && dreAnt.receita > 0 && dre.receita < dreAnt.receita * 0.8) {
+            insights.push({ icon: '📉', text: `Receita 20%+ abaixo do mês anterior. Verifique se há contratos a renovar.`, color: 'var(--color-warning)' })
+          }
+          
+          if (dre.custoKm && dre.custoKm > 3.5) {
+            insights.push({ icon: '💸', text: `Custo/km acima de R$ 3,50. Revise consumo de diesel e pedágios.`, color: 'var(--color-warning)' })
+          }
+          
+          if (insights.length === 0 && dre.resultado > 0) {
+            insights.push({ icon: '🦏', text: `Blindado! Mês positivo, margens no controle. Continue assim.`, color: 'var(--color-success)' })
+          }
+          
+          if (insights.length === 0) return null
+          
+          return (
+            <div className="rounded-xl border border-ag-border overflow-hidden" style={{ background: 'var(--color-bg)' }}>
+              <div className="px-lg py-md border-b border-ag-border">
+                <p className="text-body-sm font-medium text-ag-primary">Insights do período</p>
+              </div>
+              <div className="divide-y divide-ag-border">
+                {insights.map((ins, i) => (
+                  <div key={i} className="flex items-start gap-md px-lg py-sm">
+                    <span className="text-[18px] shrink-0 mt-xs">{ins.icon}</span>
+                    <p className="text-body-sm" style={{ color: ins.color }}>{ins.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Últimos lançamentos */}
         {hasData && recentEntries && recentEntries.length > 0 && (

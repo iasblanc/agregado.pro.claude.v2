@@ -1,23 +1,21 @@
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-ag-bg flex items-center justify-center px-lg">
-      <div className="text-center space-y-xl max-w-sm">
-        <p className="font-display text-[80px] font-medium text-ag-primary leading-none">404</p>
-        <div className="space-y-sm">
-          <h1 className="font-display text-display-sm font-medium text-ag-primary">
-            Página não encontrada
-          </h1>
-          <p className="text-body text-ag-secondary">
-            A página que você está procurando não existe ou foi movida.
-          </p>
-        </div>
-        <Link href="/gestao">
-          <Button fullWidth>Voltar ao início</Button>
-        </Link>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center text-center px-lg"
+      style={{ background: 'var(--color-bg)' }}>
+      <p className="text-[80px] mb-lg leading-none">🦏</p>
+      <h1 className="font-display text-display-lg font-medium text-ag-primary mb-sm">
+        404
+      </h1>
+      <p className="text-body text-ag-secondary mb-xl max-w-sm">
+        Essa página não existe. Mas o seu caminhão existe, e ele precisa de você.
+      </p>
+      <Link href="/"
+        className="px-xl py-md rounded-pill text-body font-medium transition-all"
+        style={{ background: 'var(--color-accent)', color: 'var(--color-cta-text)' }}>
+        Voltar ao início
+      </Link>
     </div>
   )
 }
