@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter }               from 'next/navigation'
 import { useToast }                from '@/components/ui/toast'
-import { Header }  from '@/components/layout/Header'
+import { Header }         from '@/components/layout/Header'
+import { formatPeriod }  from '@/lib/utils'
 import { Button }  from '@/components/ui/button'
 import { Input }   from '@/components/ui/input'
 

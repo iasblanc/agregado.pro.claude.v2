@@ -162,6 +162,14 @@ export default async function ContratosPage({
               <Card key={c.id}>
                 <CardBody>
                   {/* Header do card */}
+                  {myCandSet.has(c.id) && (
+                    <div className="flex mb-sm">
+                      <span className="px-sm py-xs rounded-md text-caption font-medium"
+                        style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)', border: '1px solid var(--color-success-border)' }}>
+                        ✓ Candidatura enviada
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-md mb-md">
                     <div className="flex-1 min-w-0">
                       <p className="text-body font-medium text-ag-primary mb-xs">{c.title}</p>

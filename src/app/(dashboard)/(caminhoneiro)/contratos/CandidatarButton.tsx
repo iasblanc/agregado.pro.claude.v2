@@ -112,6 +112,9 @@ export function CandidatarButton({
         rows={2}
         className="w-full px-md py-sm border border-ag-border rounded-md text-body-sm bg-ag-bg text-ag-primary resize-none focus:outline-none focus:border-ag-accent"
       />
+      <p className="caption text-right" style={{ color: message.length > 250 ? 'var(--color-warning)' : 'var(--color-text-muted)' }}>
+        {message.length}/300
+      </p>
 
       <div className="flex gap-sm">
         <Button variant="secondary" fullWidth onClick={() => setOpen(false)}>Cancelar</Button>

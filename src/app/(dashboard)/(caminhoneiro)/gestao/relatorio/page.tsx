@@ -243,6 +243,33 @@ export default async function RelatorioPage({
           </Card>
         )}
 
+        {/* Compartilhar relatório */}
+        {all.length > 0 && (
+          <Card>
+            <CardBody>
+              <p className="text-body-sm font-medium text-ag-primary mb-sm">Compartilhar resumo</p>
+              <div className="flex gap-sm flex-wrap">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `📊 *DRE ${String(period).replace('-','/')} — Agregado.Pro*\n` +
+                    `Receita: R$ ${receita.toLocaleString('pt-BR',{minimumFractionDigits:2})}\n` +
+                    `Custos: R$ ${totalCusto.toLocaleString('pt-BR',{minimumFractionDigits:2})}\n` +
+                    `Resultado: R$ ${resultado.toLocaleString('pt-BR',{minimumFractionDigits:2})}\n` +
+                    `Margem: ${margem.toFixed(1)}%`
+                  )}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-sm px-md py-sm rounded-lg text-body-sm font-medium border border-ag-border text-ag-secondary hover:text-ag-primary transition-colors">
+                  <span>📱</span> WhatsApp
+                </a>
+                <a href={`/api/dre/export?period=${period}`} download
+                  className="flex items-center gap-sm px-md py-sm rounded-lg text-body-sm font-medium border border-ag-border text-ag-secondary hover:text-ag-primary transition-colors">
+                  <span>⬇</span> Exportar CSV
+                </a>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+
         {/* Zero state */}
         {all.length === 0 && (
           <Card>

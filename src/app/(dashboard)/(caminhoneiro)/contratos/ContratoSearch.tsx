@@ -50,7 +50,7 @@ export function ContratoSearch({
       <button type="submit" disabled={isPending}
         className="px-lg py-sm rounded-lg border border-ag-border text-body-sm font-medium text-ag-secondary hover:text-ag-primary hover:border-ag-accent transition-all whitespace-nowrap"
         style={{ opacity: isPending ? 0.6 : 1 }}>
-        {isPending ? '...' : 'Buscar'}
+        {isPending ? '⟳ Buscando...' : 'Buscar'}
       </button>
     </form>
   )
