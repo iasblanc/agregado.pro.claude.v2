@@ -54,6 +54,11 @@ export default async function ContratoDetalheAGPage({ params }: { params: Promis
   // Publisher para avaliação bidirecional
   const { data: publisherProfile } = await admin.from('profiles').select('id').eq('id', contract.publisher_id).single()
 
+  // Veículos do usuário para seleção na candidatura
+  const { data: userVehicles } = await admin.from('vehicles')
+    .select('id, brand, model, year, plate, type')
+    .eq('owner_id', profile.id).eq('is_active', true)
+
   return (
     <div className="flex flex-col h-full">
       <Header title={contract.title} subtitle={`${contract.route_origin} → ${contract.route_destination}`} />
@@ -133,7 +138,7 @@ export default async function ContratoDetalheAGPage({ params }: { params: Promis
               ✓ Sua candidatura está <strong>{myCand.status}</strong>
             </div>
           ) : (
-            <CandidatarButton contractId={contract.id} profileId={profile.id} custoKmReal={custoKmReal} />
+            <CandidatarButton contractId={contract.id} profileId={profile.id} custoKmReal={custoKmReal} vehicles={userVehicles ?? []} vehicleType={contract.vehicle_type} />
           )}
         {/* Avaliação — disponível quando contrato aceito */}
         {myCand?.status === 'aceita' && myCand?.id && (

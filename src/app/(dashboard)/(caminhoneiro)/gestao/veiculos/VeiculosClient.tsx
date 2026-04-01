@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter }               from 'next/navigation'
+import { useRouter }
+import { useToast }  from '@/components/ui/toast'               from 'next/navigation'
 import { Header }    from '@/components/layout/Header'
 import { Card, CardBody } from '@/components/ui/card'
 import { Button }    from '@/components/ui/button'
@@ -16,7 +17,8 @@ interface Vehicle {
 }
 
 export function VeiculosClient({ vehicles: initial }: { vehicles: Vehicle[] }) {
-  const router = useRouter()
+  const router  = useRouter()
+  const { success, error: toastErr } = useToast()
   const [isPending, startTransition] = useTransition()
   const [showForm, setShowForm] = useState(initial.length === 0)
   const [error,    setError]    = useState('')
